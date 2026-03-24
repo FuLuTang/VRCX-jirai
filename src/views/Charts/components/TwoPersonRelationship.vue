@@ -105,27 +105,12 @@
                         </Button>
                     </TooltipWrapper>
 
-                    <Popover>
-                        <PopoverTrigger as-child>
-                            <div>
-                                <TooltipWrapper
-                                    :content="t('view.charts.two_person_relationship.settings')"
-                                    side="top">
-                                    <Button class="rounded-full" size="icon" variant="ghost">
-                                        <Settings class="size-4" />
-                                    </Button>
-                                </TooltipWrapper>
-                            </div>
-                        </PopoverTrigger>
-                        <PopoverContent side="bottom" align="end" class="w-60">
-                            <div class="flex items-center justify-between px-0.5 h-[30px]">
-                                <span class="shrink-0 text-sm">
-                                    {{ t('view.charts.two_person_relationship.show_self_presence') }}
-                                </span>
-                                <Switch v-model="showSelfPresence" />
-                            </div>
-                        </PopoverContent>
-                    </Popover>
+                    <div class="flex items-center justify-between px-0.5 h-[30px] gap-2">
+                        <span class="shrink-0 text-sm">
+                            {{ t('view.charts.two_person_relationship.show_self_presence') }}
+                        </span>
+                        <Switch v-model="showSelfPresence" />
+                    </div>
                 </div>
             </div>
 
@@ -239,7 +224,6 @@
         Crown,
         Hash,
         RefreshCcw,
-        Settings,
         Users
     } from 'lucide-vue-next';
     import { storeToRefs } from 'pinia';
@@ -248,7 +232,6 @@
     import BackToTop from '@/components/BackToTop.vue';
     import { Button } from '@/components/ui/button';
     import { DataTableEmpty } from '@/components/ui/data-table';
-    import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
     import { Switch } from '@/components/ui/switch';
     import { VirtualCombobox } from '@/components/ui/virtual-combobox';
 

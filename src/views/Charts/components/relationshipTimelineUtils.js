@@ -155,7 +155,7 @@ function buildPerBucketTopNPercentageSeries({
             stack: 'total',
             areaStyle: { opacity: 0.7 },
             lineStyle: { width: 0 },
-            smooth: true,
+            smooth: false,
             symbol: 'none',
             color: '#aaaaaa',
             emphasis: {
@@ -178,7 +178,7 @@ function buildPerBucketTopNPercentageSeries({
             stack: 'total',
             areaStyle: { opacity: 0.7 },
             lineStyle: { width: 0 },
-            smooth: true,
+            smooth: false,
             symbol: 'none',
             color: colorPalette[colorIdx],
             emphasis: {
