@@ -399,6 +399,26 @@ export function showUserDialog(userId) {
                     D.id,
                     D.ref?.displayName || D.id
                 );
+
+                // Record bio snapshot for any user (friend or stranger) when
+                // their profile is viewed, skipping if bio hasn't changed
+                if (userId !== currentUser.id && D.ref.bio !== undefined) {
+                    const currentBio = D.ref.bio || '';
+                    database.getLastBioChangeForUser(userId).then((last) => {
+                        if (!last || last.bio !== currentBio) {
+                            database.addBioToDatabase({
+                                created_at: new Date().toJSON(),
+                                userId,
+                                displayName: D.ref.displayName,
+                                bio: currentBio,
+                                previousBio: last ? last.bio : ''
+                            });
+                        }
+                    }).catch((err) => {
+                        console.error('Failed to record bio snapshot:', err);
+                    });
+                }
+
                 D.friend = friendStore.friends.get(D.id);
                 D.isFriend = Boolean(D.friend);
                 D.note = String(D.ref.note || '');

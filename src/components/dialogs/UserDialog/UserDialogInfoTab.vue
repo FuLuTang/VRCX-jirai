@@ -181,11 +181,8 @@
                     </div>
                 </div>
                 <template v-if="bioDiffEnabled">
-                    <div v-if="bioDiffLines.length === 0" class="text-xs text-muted-foreground mt-1">
-                        {{ t('dialog.user.info.bio_diff_no_history') }}
-                    </div>
                     <pre
-                        v-else
+                        v-if="bioDiffLines.length > 0"
                         class="text-xs font-[inherit]"
                         style="white-space: pre-wrap; margin: 0 0.5em 0 0; max-height: 210px; overflow-y: auto"
                     ><template v-for="(line, idx) in bioDiffLines" :key="idx"><span
