@@ -560,7 +560,7 @@
     const vrchatCredit = ref(null);
     const translateLoading = ref(false);
 
-    const bioDiffEnabled = ref(false);
+    const bioDiffEnabled = ref(true);
     const bioDiffLines = ref([]);
 
     /**
@@ -593,14 +593,14 @@
         let j = 0;
         while (i < m || j < n) {
             if (i < m && j < n && oldLines[i] === newLines[j]) {
-                result.push({ type: 'eq', text: ' ' + oldLines[i] });
+                result.push({ type: 'eq', text: oldLines[i] });
                 i++;
                 j++;
             } else if (j < n && (i >= m || dp[i][j + 1] >= dp[i + 1][j])) {
-                result.push({ type: 'add', text: '+' + newLines[j] });
+                result.push({ type: 'add', text: newLines[j] });
                 j++;
             } else {
-                result.push({ type: 'del', text: '-' + oldLines[i] });
+                result.push({ type: 'del', text: oldLines[i] });
                 i++;
             }
         }
@@ -613,12 +613,34 @@
             bioDiffLines.value = [];
             return;
         }
-        const record = await database.getLastBioChangeForUser(dialogUserId);
-        if (!record) {
+        const records = await database.getRecentBioChangesForUser(dialogUserId, 50);
+        if (!records || records.length === 0) {
             bioDiffLines.value = [];
             return;
         }
-        bioDiffLines.value = computeLineDiff(record.previousBio || '', record.bio || '');
+        
+        const latestRecord = records[0];
+        let baseBio = latestRecord.previousBio || '';
+        const DAY_IN_MS = 24 * 60 * 60 * 1000;
+        
+        for (let i = 1; i < records.length; i++) {
+            if (i + 1 < records.length) {
+                const prevChange = records[i];
+                const olderChange = records[i + 1];
+                const t1 = new Date(prevChange.createdAt).getTime();
+                const t2 = new Date(olderChange.createdAt).getTime();
+                
+                if (t1 - t2 <= DAY_IN_MS) {
+                    baseBio = olderChange.previousBio || '';
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        
+        bioDiffLines.value = computeLineDiff(baseBio, latestRecord.bio || '');
     }
 
     function toggleBioDiff(val) {
