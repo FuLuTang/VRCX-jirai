@@ -445,12 +445,48 @@ export function formatDifference(
             .replaceAll(/\n/g, '<br>')
     );
 
-    const oldWords = oldString
-        .split(/\s+/)
-        .flatMap((word) => word.split(/(<br>)/));
-    const newWords = newString
-        .split(/\s+/)
-        .flatMap((word) => word.split(/(<br>)/));
+    // Unicode regex for individual CJK characters: covers Hiragana, Katakana,
+    // CJK Unified Ideographs + Extension A, Hangul, CJK Compatibility Ideographs.
+    const CJK_CHAR_RE = /[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7a3\uf900-\ufaff]/;
+
+    // Returns true when ch is a CJK character.  Handles undefined / empty strings.
+    function isCJKChar(ch) {
+        return ch ? CJK_CHAR_RE.test(ch) : false;
+    }
+
+    // Tokenize: split by whitespace, keep <br> as its own token, and split
+    // CJK characters individually so that Chinese text diffs at character level.
+    function tokenize(str) {
+        return str
+            .split(/\s+/)
+            .flatMap((chunk) => chunk.split(/(<br>)/))
+            .flatMap((chunk) => {
+                if (!chunk || chunk === '<br>') return chunk ? [chunk] : [];
+                return chunk.split(new RegExp(`(${CJK_CHAR_RE.source})`)).filter(Boolean);
+            });
+    }
+
+    // Join tokens into a string.  No space is inserted around CJK characters so
+    // that Chinese text is reconstructed without artificial word breaks.
+    function joinTokens(tokens) {
+        if (!tokens.length) return '';
+        let result = tokens[0];
+        for (let i = 1; i < tokens.length; i++) {
+            const prev = tokens[i - 1];
+            const curr = tokens[i];
+            const prevLast = prev.length > 0 ? prev[prev.length - 1] : '';
+            const currFirst = curr.length > 0 ? curr[0] : '';
+            if (isCJKChar(prevLast) || isCJKChar(currFirst)) {
+                result += curr;
+            } else {
+                result += ' ' + curr;
+            }
+        }
+        return result;
+    }
+
+    const oldWords = tokenize(oldString);
+    const newWords = tokenize(newString);
 
     function findLongestMatch(oldStart, oldEnd, newStart, newEnd) {
         let bestOldStart = oldStart;
@@ -511,9 +547,7 @@ export function formatDifference(
 
             // Add the matched words
             result.push(
-                oldWords
-                    .slice(match.oldStart, match.oldStart + match.size)
-                    .join(' ')
+                joinTokens(oldWords.slice(match.oldStart, match.oldStart + match.size))
             );
 
             // Handle differences after the match
@@ -533,15 +567,28 @@ export function formatDifference(
         } else {
             function build(words, start, end, pattern) {
                 let r = [];
-                let ts = words
-                    .slice(start, end)
-                    .filter((w) => w.length > 0)
-                    .join(' ')
-                    .split('<br>');
-                for (let i = 0; i < ts.length; i++) {
-                    if (i > 0) r.push('<br>');
-                    if (ts[i].length < 1) continue;
-                    r.push(pattern.replace('{{text}}', ts[i]));
+                const slice = words.slice(start, end).filter((w) => w.length > 0);
+                // Split on <br> boundaries, then join each segment with CJK-aware spacing
+                const segments = [];
+                let current = [];
+                for (const w of slice) {
+                    if (w === '<br>') {
+                        if (current.length) {
+                            segments.push(joinTokens(current));
+                            current = [];
+                        }
+                        segments.push('<br>');
+                    } else {
+                        current.push(w);
+                    }
+                }
+                if (current.length) segments.push(joinTokens(current));
+                for (let i = 0; i < segments.length; i++) {
+                    if (segments[i] === '<br>') {
+                        r.push('<br>');
+                    } else if (segments[i].length > 0) {
+                        r.push(pattern.replace('{{text}}', segments[i]));
+                    }
                 }
                 return r;
             }
@@ -562,8 +609,33 @@ export function formatDifference(
         return result;
     }
 
-    return buildDiff(0, oldWords.length, 0, newWords.length)
-        .join(' ')
+    // Smart-join the result parts: no space around CJK characters or <br>.
+    // Strip HTML tags when inspecting boundary chars so span-wrapped CJK tokens
+    // are also handled correctly.
+    const parts = buildDiff(0, oldWords.length, 0, newWords.length);
+    let output = '';
+    for (let i = 0; i < parts.length; i++) {
+        if (i === 0) {
+            output += parts[i];
+            continue;
+        }
+        const prev = parts[i - 1];
+        const curr = parts[i];
+        if (prev === '<br>' || curr === '<br>') {
+            output += curr;
+        } else {
+            const prevText = prev.replace(/<[^>]*>/g, '');
+            const currText = curr.replace(/<[^>]*>/g, '');
+            const prevLastCh = prevText.length > 0 ? prevText[prevText.length - 1] : '';
+            const currFirstCh = currText.length > 0 ? currText[0] : '';
+            if (isCJKChar(prevLastCh) || isCJKChar(currFirstCh)) {
+                output += curr;
+            } else {
+                output += ' ' + curr;
+            }
+        }
+    }
+    return output
         .replace(/<br>[ ]+<br>/g, '<br><br>')
         .replace(/<br> /g, '<br>');
 }
