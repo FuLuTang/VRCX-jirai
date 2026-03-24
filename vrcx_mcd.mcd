@@ -1,0 +1,181 @@
+:
+:
+:
+:
+FEED_ONLINE_OFFLINE: id, created_at, type, location, world_name, time, group_name
+:
+:
+:
+:
+:
+:
+:
+:
+
+:
+GAMELOG_JOIN_LEAVE: id, created_at, type, display_name, location, time
+SENT_FROM, 0N USER, 11 NOTIFICATION: sender_username
+NOTIFICATION: id, created_at, type, message, world_name, image_url, invite_message, request_message, response_message, expired
+IS_ONLINE, 1N USER, 0N FEED_ONLINE_OFFLINE
+FRIEND_LOG_HISTORY: id, created_at, type, display_name, previous_display_name, trust_level, previous_trust_level, friend_number
+:
+:
+:
+:
+:
+:
+:
+
+FEED_STATUS: id, created_at, status, status_description, previous_status, previous_status_description
+HAS_STATUS, 1N USER, 0N FEED_STATUS
+JOIN_BY, 1N USER, 0N GAMELOG_JOIN_LEAVE
+SENT_TO, 0N USER, 11 NOTIFICATION: receiver_user_id
+LOGGED, 1N USER, 0N FRIEND_LOG_HISTORY
+POSTED, 1N USER, 0N FEED_GPS
+FEED_GPS: id, created_at, location, world_name, previous_location, time, group_name
+:
+:
+:
+:
+:
+:
+
+:
+FEED_AVATAR: id, created_at, owner_id, avatar_name, current_avatar_image_url, current_avatar_thumbnail_image_url
+HAS_AVATAR, 1N USER, 0N FEED_AVATAR
+USER: user_id, display_name, trust_level, friend_number
+FAV_FRIEND_OF, 1N USER, 0N FAVORITE_FRIEND
+FAVORITE_FRIEND: id, created_at, group_name
+:
+:
+:
+:
+:
+:
+:
+
+ACTIVITY_SESSION: session_id, start_at, end_at, is_open_tail, source_revision
+SESSION_FOR, 11 ACTIVITY_SESSION, 0N USER
+HAS_BIO, 1N USER, 0N FEED_BIO
+MOD_FOR, 11 MODERATION, 0N USER
+MODERATION: updated_at, display_name, block, mute
+MEMO_FOR_USER, 11 MEMO, 0N USER
+:
+:
+:
+:
+:
+:
+:
+
+:
+FEED_BIO: id, created_at, bio, previous_bio
+NOTE_FOR, 11 NOTES, 0N USER
+:
+:
+MEMO: edited_at, memo
+:
+:
+:
+:
+:
+:
+:
+
+:
+:
+NOTES: note, created_at
+:
+:
+:
+:
+FAVORITE_WORLD: id, created_at, group_name
+FAV_WORLD_OF, 0N WORLD, 11 FAVORITE_WORLD
+:
+:
+:
+:
+
+:
+:
+:
+:
+:
+:
+:
+AT_WORLD, 0N WORLD, 11 GAMELOG_LOCATION
+WORLD: world_id, name, description, author_id, author_name, image_url, release_status, thumbnail_image_url, version
+:
+:
+:
+:
+
+:
+:
+:
+:
+:
+:
+:
+GAMELOG_LOCATION: id, created_at, location, time, group_name
+MEMO_FOR_WORLD, 11 WORLD_MEMO, 0N WORLD
+:
+:
+:
+:
+
+:
+:
+:
+:
+:
+:
+:
+:
+WORLD_MEMO: edited_at, memo
+:
+:
+MUTUAL_GRAPH_FRIEND: friend_id
+MUTUAL_GRAPH_LINK, 1N MUTUAL_GRAPH_FRIEND, 1N MUTUAL_GRAPH_FRIEND
+
+:
+:
+:
+:
+:
+:
+:
+FAVORITE_AVATAR: id, created_at, group_name
+MEMO_FOR_AVATAR, 11 AVATAR_MEMO, 0N AVATAR
+AVATAR_MEMO: edited_at, memo
+:
+:
+:
+
+:
+:
+:
+:
+:
+:
+:
+FAV_AVATAR_OF, 0N AVATAR, 11 FAVORITE_AVATAR
+AVATAR: avatar_id, name, author_id, author_name, description, image_url, release_status, thumbnail_image_url, version
+:
+:
+:
+:
+
+:
+:
+:
+:
+:
+:
+:
+AVATAR_TAG: tag, color
+TAGGED, 1N AVATAR, 0N AVATAR_TAG
+:
+:
+:
+:
