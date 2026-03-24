@@ -123,3 +123,7 @@ To see VRChat's stance on API usage, see the #faq channel in the VRChat Discord.
 ---
 
 VRCX is not endorsed by VRChat and does not reflect the views or opinions of VRChat or anyone officially involved in producing or managing VRChat properties. VRChat and all associated properties are trademarks or registered trademarks of VRChat Inc. VRChat © VRChat Inc.
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/image?repos=FuLuTang/VRCX-jirai&type=date&legend=top-left)](https://www.star-history.com/?repos=FuLuTang%2FVRCX-jirai&type=date&legend=top-left)
