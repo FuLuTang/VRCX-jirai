@@ -47,6 +47,24 @@ const feed = {
         );
     },
 
+    async getLastBioChangeForUser(userId) {
+        let result = null;
+        await sqliteService.execute(
+            (row) => {
+                result = {
+                    bio: row[0],
+                    previousBio: row[1],
+                    createdAt: row[2]
+                };
+            },
+            `SELECT bio, previous_bio, created_at FROM ${dbVars.userPrefix}_feed_bio WHERE user_id = @userId ORDER BY id DESC LIMIT 1`,
+            {
+                '@userId': userId
+            }
+        );
+        return result;
+    },
+
     addAvatarToDatabase(entry) {
         sqliteService.executeNonQuery(
             `INSERT OR IGNORE INTO ${dbVars.userPrefix}_feed_avatar (created_at, user_id, display_name, owner_id, avatar_name, current_avatar_image_url, current_avatar_thumbnail_image_url, previous_current_avatar_image_url, previous_current_avatar_thumbnail_image_url) VALUES (@created_at, @user_id, @display_name, @owner_id, @avatar_name, @current_avatar_image_url, @current_avatar_thumbnail_image_url, @previous_current_avatar_image_url, @previous_current_avatar_thumbnail_image_url)`,

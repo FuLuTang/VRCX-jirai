@@ -1093,6 +1093,8 @@
                 "avatar_info_last_seen": "正在使用的模型",
                 "represented_group": "展示群组",
                 "bio": "个人简介",
+                "bio_diff_toggle": "启用diff",
+                "bio_diff_no_history": "没有简介变更记录",
                 "last_seen": "最后见面时间",
                 "join_count": "见面的次数",
                 "time_together": "一起游玩的时长",

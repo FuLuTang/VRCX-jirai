@@ -1376,6 +1376,8 @@
                 "unknown_avatar": "Unknown Avatar",
                 "represented_group": "Represented Group",
                 "bio": "Bio",
+                "bio_diff_toggle": "Enable diff",
+                "bio_diff_no_history": "No previous bio change recorded",
                 "last_seen": "Last Seen",
                 "join_count": "Join Count",
                 "time_together": "Time Together",

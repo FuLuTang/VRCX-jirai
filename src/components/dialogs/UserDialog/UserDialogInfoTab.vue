@@ -173,8 +173,27 @@
         </div>
         <div class="box-border flex items-center p-1.5 text-[13px] w-full cursor-default">
             <div class="flex-1 overflow-hidden">
-                <span class="block truncate font-medium leading-[18px]">{{ t('dialog.user.info.bio') }}</span>
+                <div class="flex items-center justify-between">
+                    <span class="block truncate font-medium leading-[18px]">{{ t('dialog.user.info.bio') }}</span>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <Switch :model-value="bioDiffEnabled" class="scale-75" @update:model-value="toggleBioDiff" />
+                        <span class="text-xs text-muted-foreground">{{ t('dialog.user.info.bio_diff_toggle') }}</span>
+                    </div>
+                </div>
+                <template v-if="bioDiffEnabled">
+                    <div v-if="bioDiffLines.length === 0" class="text-xs text-muted-foreground mt-1">
+                        {{ t('dialog.user.info.bio_diff_no_history') }}
+                    </div>
+                    <pre
+                        v-else
+                        class="text-xs font-[inherit]"
+                        style="white-space: pre-wrap; margin: 0 0.5em 0 0; max-height: 210px; overflow-y: auto"
+                    ><template v-for="(line, idx) in bioDiffLines" :key="idx"><span
+                            :class="line.type === 'add' ? 'text-green-500' : line.type === 'del' ? 'text-red-500' : ''"
+                        >{{ line.text }}</span><br /></template></pre>
+                </template>
                 <pre
+                    v-else
                     class="text-xs truncate font-[inherit]"
                     style="white-space: pre-wrap; margin: 0 0.5em 0 0; max-height: 210px; overflow-y: auto"
                     >{{ bioCache.translated || userDialog.ref.bio || '-' }}</pre
@@ -480,6 +499,7 @@
     import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
     import { ref, watch } from 'vue';
     import { Button } from '@/components/ui/button';
+    import { Switch } from '@/components/ui/switch';
     import { Spinner } from '@/components/ui/spinner';
     import { storeToRefs } from 'pinia';
     import { toast } from 'vue-sonner';
@@ -515,6 +535,7 @@
     import { showGroupDialog } from '../../../coordinators/groupCoordinator';
 
     import EditNoteAndMemoDialog from './EditNoteAndMemoDialog.vue';
+    import { database } from '../../../services/database';
 
     defineEmits(['showBioDialog']);
 
@@ -542,6 +563,74 @@
     const vrchatCredit = ref(null);
     const translateLoading = ref(false);
 
+    const bioDiffEnabled = ref(false);
+    const bioDiffLines = ref([]);
+
+    /**
+     * Compute a simple line-level diff between oldText and newText.
+     * Returns an array of {type: 'del'|'add'|'eq', text: string}.
+     * @param {string} oldText
+     * @param {string} newText
+     * @returns {Array<{type:string,text:string}>}
+     */
+    function computeLineDiff(oldText, newText) {
+        const oldLines = (oldText || '').split('\n');
+        const newLines = (newText || '').split('\n');
+        const m = oldLines.length;
+        const n = newLines.length;
+
+        // LCS-based diff using DP
+        const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+        for (let i = m - 1; i >= 0; i--) {
+            for (let j = n - 1; j >= 0; j--) {
+                if (oldLines[i] === newLines[j]) {
+                    dp[i][j] = dp[i + 1][j + 1] + 1;
+                } else {
+                    dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1]);
+                }
+            }
+        }
+
+        const result = [];
+        let i = 0;
+        let j = 0;
+        while (i < m || j < n) {
+            if (i < m && j < n && oldLines[i] === newLines[j]) {
+                result.push({ type: 'eq', text: ' ' + oldLines[i] });
+                i++;
+                j++;
+            } else if (j < n && (i >= m || dp[i][j + 1] >= dp[i + 1][j])) {
+                result.push({ type: 'add', text: '+' + newLines[j] });
+                j++;
+            } else {
+                result.push({ type: 'del', text: '-' + oldLines[i] });
+                i++;
+            }
+        }
+        return result;
+    }
+
+    async function loadBioDiff() {
+        const dialogUserId = userDialog.value.id;
+        if (!dialogUserId) {
+            bioDiffLines.value = [];
+            return;
+        }
+        const record = await database.getLastBioChangeForUser(dialogUserId);
+        if (!record) {
+            bioDiffLines.value = [];
+            return;
+        }
+        bioDiffLines.value = computeLineDiff(record.previousBio || '', record.bio || '');
+    }
+
+    function toggleBioDiff(val) {
+        bioDiffEnabled.value = val;
+        if (val) {
+            loadBioDiff();
+        }
+    }
+
     watch(
         () => userDialog.value.loading,
         () => {
@@ -551,6 +640,9 @@
                         userId: null,
                         translated: null
                     };
+                }
+                if (bioDiffEnabled.value) {
+                    loadBioDiff();
                 }
             }
         }
