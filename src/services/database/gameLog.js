@@ -1633,8 +1633,8 @@ const gameLog = {
                 AND b.type = 'OnPlayerLeft'
                 AND a.user_id = @friendAUserId
                 AND b.user_id = @friendBUserId
-                AND a.location NOT IN ('', 'traveling')
-                AND b.location NOT IN ('', 'traveling')
+                AND a.location NOT IN ('', 'traveling', 'private', 'private:private')
+                AND b.location NOT IN ('', 'traveling', 'private', 'private:private')
                 AND a.time > 0
                 AND b.time > 0
                 AND strftime('%Y-%m-%dT%H:%M:%SZ', a.created_at, '-' || (a.time * 1.0 / 1000) || ' seconds') < b.created_at
@@ -1664,14 +1664,14 @@ const gameLog = {
                      SELECT previous_location AS location, created_at, time
                      FROM ${dbVars.userPrefix}_feed_gps
                      WHERE user_id = @userId
-                       AND previous_location NOT IN ('', 'offline', 'traveling')
+                       AND previous_location NOT IN ('', 'offline', 'traveling', 'private', 'private:private')
                        AND time > 0
                      UNION ALL
                      SELECT location, created_at, time
                      FROM ${dbVars.userPrefix}_feed_online_offline
                      WHERE user_id = @userId
                        AND type = 'Offline'
-                       AND location NOT IN ('', 'offline', 'traveling')
+                       AND location NOT IN ('', 'offline', 'traveling', 'private', 'private:private')
                        AND time > 0
                  )
                  ORDER BY created_at DESC`,
