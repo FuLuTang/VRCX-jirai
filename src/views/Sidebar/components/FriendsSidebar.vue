@@ -194,6 +194,20 @@
             </div>
         </div>
         <BackToTop :virtualizer="virtualizer" :target="scrollViewportRef" :tooltip="false" />
+
+        <div class="absolute bottom-5 right-[70px] z-10">
+            <button
+                class="px-3 py-1.5 rounded-md shadow-lg text-white font-medium text-sm transition-colors"
+                :class="autoFollowStore.isActive ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-500 hover:bg-blue-600'"
+                @click="toggleAutoFollow"
+            >
+                {{ autoFollowStore.isActive ? '跟随中 ■' : '自动跟随' }}
+            </button>
+        </div>
+        <AutoFollowDialog
+            v-if="isAutoFollowDialogOpen"
+            v-model:open="isAutoFollowDialogOpen"
+        />
     </div>
 </template>
 
@@ -226,7 +240,8 @@
         useGameStore,
         useLaunchStore,
         useLocationStore,
-        useUserStore
+        useUserStore,
+        useAutoFollowStore
     } from '../../../stores';
     import { buildFriendRow, buildInstanceHeaderRow, buildToggleRow, estimateRowSize } from '../friendsSidebarUtils';
     import { getFriendsSortFunction, isRealInstance } from '../../../shared/utils';
@@ -238,6 +253,7 @@
     import { parseLocation } from '../../../shared/utils';
 
     import BackToTop from '../../../components/BackToTop.vue';
+    import AutoFollowDialog from '../../../components/dialogs/AutoFollowDialog.vue';
     import FriendItem from './FriendItem.vue';
     import Location from '../../../components/Location.vue';
     import configRepository from '../../../services/config';
@@ -247,6 +263,17 @@
     import { showUserDialog } from '../../../coordinators/userCoordinator';
 
     const { t } = useI18n();
+
+    const autoFollowStore = useAutoFollowStore();
+    const isAutoFollowDialogOpen = ref(false);
+
+    function toggleAutoFollow() {
+        if (autoFollowStore.isActive) {
+            autoFollowStore.stopFollow();
+        } else {
+            isAutoFollowDialogOpen.value = true;
+        }
+    }
 
     const friendStore = useFriendStore();
     const {
