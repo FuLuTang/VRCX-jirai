@@ -70,6 +70,8 @@
     },
     "side_panel": {
         "search_placeholder": "搜索",
+        "search_recently_met": "最近遇到的人",
+        "search_recently_joined": "最近加入的世界",
         "search_result_active": "活跃",
         "search_result_offline": "离线",
         "search_result_more": "搜索更多：",
@@ -454,8 +456,8 @@
                 "meet_count": "{count} 次共存",
                 "settings": "设置",
                 "show_self_presence": "显示自己是否在场",
-                "self_present": "我在场",
-                "self_not_present": "我未在场",
+                "self_present": "在场",
+                "self_not_present": "缺席",
                 "instance_creator": "房间创建者",
                 "max_player_count": "最高同时在场人数"
             },
@@ -524,7 +526,16 @@
                 "vrchat_config_description": "打开 VRChat 的 config.json 设置",
                 "launch_options_description": "编辑 VRChat 的启动选项",
                 "registry_backup": "VRChat 设置数据备份工具",
-                "registry_backup_description": "创建或恢复 VRChat 的设置备份"
+                "registry_backup_description": "创建或恢复 VRChat 的设置备份",
+                "bio_fetch": "信息抓取补全",
+                "bio_fetch_description": "扫描所有好友缓存中的简介，将新增或变更的简介保存到数据库",
+                "bio_fetch_hint": "准备好扫描 {count} 位好友。",
+                "bio_fetch_start": "开始抓取",
+                "bio_fetch_again": "再次抓取",
+                "bio_fetch_cancel": "取消",
+                "bio_fetch_close": "关闭",
+                "bio_fetch_progress": "正在扫描 {current} / {total}...",
+                "bio_fetch_done": "完成 — 共保存了 {total} 位好友中 {updated} 条新增/变更的简介。"
             },
             "other": {
                 "header": "其它",

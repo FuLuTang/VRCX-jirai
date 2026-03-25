@@ -156,6 +156,16 @@ const toolDefinitions = [
         action: { type: 'dialog', dialogKey: 'auto-change-status' }
     },
     {
+        key: 'bio-fetch',
+        category: 'system',
+        iconKey: 'database',
+        navIcon: 'ri-database-2-line',
+        titleKey: 'view.tools.system_tools.bio_fetch',
+        descriptionKey: 'view.tools.system_tools.bio_fetch_description',
+        navEligible: false,
+        action: { type: 'dialog', dialogKey: 'bio-fetch' }
+    },
+    {
         key: 'group-calendar',
         category: 'group',
         iconKey: 'calendar',

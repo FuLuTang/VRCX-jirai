@@ -7,6 +7,7 @@ import { showGroupDialog } from '../coordinators/groupCoordinator';
 import { showWorldDialog } from '../coordinators/worldCoordinator';
 import { showAvatarDialog } from '../coordinators/avatarCoordinator';
 import { showUserDialog } from '../coordinators/userCoordinator';
+import { database } from '../services/database';
 
 import QuickSearchWorker from './quickSearchWorker.js?worker&inline';
 
@@ -46,6 +47,10 @@ export const useQuickSearchStore = defineStore('QuickSearch', () => {
     const ownGroupResults = ref([]);
     const joinedGroupResults = ref([]);
 
+    // Recently met / recently joined (shown when query is empty)
+    const recentlyMetUsers = ref([]);
+    const recentlyJoinedLocations = ref([]);
+
     const hasResults = computed(
         () =>
             friendResults.value.length > 0 ||
@@ -58,6 +63,20 @@ export const useQuickSearchStore = defineStore('QuickSearch', () => {
     );
 
     const currentUserId = computed(() => userStore.currentUser?.id);
+
+    async function loadRecentItems() {
+        const userId = currentUserId.value;
+        if (!userId) return;
+        const [users, locations] = await Promise.all([
+            database.getRecentlyMetUsers(userId, 20).catch(() => []),
+            database.getRecentlyJoinedLocations(10).catch(() => [])
+        ]);
+        // Exclude friends from recently-met list
+        recentlyMetUsers.value = users.filter(
+            (u) => !friendStore.friends.has(u.userId)
+        );
+        recentlyJoinedLocations.value = locations;
+    }
 
     // Send index update to worker when data changes
     function scheduleIndexUpdate() {
@@ -135,6 +154,7 @@ export const useQuickSearchStore = defineStore('QuickSearch', () => {
         if (open) {
             startIndexWatchers();
             sendIndexUpdate();
+            loadRecentItems();
             if (query.value && query.value.length >= 2) {
                 dispatchSearch();
             }
@@ -175,6 +195,8 @@ export const useQuickSearchStore = defineStore('QuickSearch', () => {
         favoriteWorldResults.value = [];
         ownGroupResults.value = [];
         joinedGroupResults.value = [];
+        recentlyMetUsers.value = [];
+        recentlyJoinedLocations.value = [];
     }
 
     function open() {
@@ -213,6 +235,12 @@ export const useQuickSearchStore = defineStore('QuickSearch', () => {
             case 'group':
                 showGroupDialog(item.id);
                 break;
+            case 'recentlyMet':
+                showUserDialog(item.id);
+                break;
+            case 'recentlyJoined':
+                showWorldDialog(item.id);
+                break;
         }
     }
 
@@ -226,6 +254,8 @@ export const useQuickSearchStore = defineStore('QuickSearch', () => {
         favoriteWorldResults,
         ownGroupResults,
         joinedGroupResults,
+        recentlyMetUsers,
+        recentlyJoinedLocations,
         hasResults,
 
         open,

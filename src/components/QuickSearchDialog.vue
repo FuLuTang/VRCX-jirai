@@ -1,7 +1,7 @@
 <script setup>
     import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
     import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-    import { Globe, Image, Users } from 'lucide-vue-next';
+    import { Clock, Globe, History, Image, Users } from 'lucide-vue-next';
     import { storeToRefs } from 'pinia';
     import { useI18n } from 'vue-i18n';
 
@@ -22,6 +22,8 @@
         favoriteWorldResults,
         ownGroupResults,
         joinedGroupResults,
+        recentlyMetUsers,
+        recentlyJoinedLocations,
         hasResults
     } = storeToRefs(quickSearchStore);
     const { selectResult } = quickSearchStore;
@@ -76,6 +78,34 @@
                                 <span class="text-xs text-muted-foreground">{{
                                     t('side_panel.search_scope_joined')
                                 }}</span>
+                            </CommandItem>
+                        </CommandGroup>
+
+                        <CommandGroup
+                            v-if="recentlyMetUsers.length > 0"
+                            :heading="t('side_panel.search_recently_met')">
+                            <CommandItem
+                                v-for="user in recentlyMetUsers"
+                                :key="user.userId"
+                                :value="'recently-met-' + user.userId"
+                                class="gap-3"
+                                @select="handleSelect({ id: user.userId, type: 'recentlyMet' })">
+                                <Clock class="size-4 text-muted-foreground" />
+                                <span class="truncate">{{ user.displayName }}</span>
+                            </CommandItem>
+                        </CommandGroup>
+
+                        <CommandGroup
+                            v-if="recentlyJoinedLocations.length > 0"
+                            :heading="t('side_panel.search_recently_joined')">
+                            <CommandItem
+                                v-for="loc in recentlyJoinedLocations"
+                                :key="loc.worldId"
+                                :value="'recently-joined-' + loc.worldId"
+                                class="gap-3"
+                                @select="handleSelect({ id: loc.worldId, type: 'recentlyJoined' })">
+                                <History class="size-4 text-muted-foreground" />
+                                <span class="truncate">{{ loc.worldName }}</span>
                             </CommandItem>
                         </CommandGroup>
                     </template>

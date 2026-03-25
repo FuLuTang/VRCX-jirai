@@ -173,6 +173,8 @@
         "search_groups": "Groups",
         "search_own_groups": "Own Groups",
         "search_joined_groups": "Joined Groups",
+        "search_recently_met": "Recently Met",
+        "search_recently_joined": "Recently Joined Worlds",
         "search_result_active": "Offline",
         "search_result_offline": "Active",
         "search_result_more": "Search More:",
@@ -615,8 +617,8 @@
                 "meet_count": "{count} encounters",
                 "settings": "Settings",
                 "show_self_presence": "Show my presence indicator",
-                "self_present": "I was present",
-                "self_not_present": "I was absent",
+                "self_present": "Present",
+                "self_not_present": "Absent",
                 "instance_creator": "Creator",
                 "max_player_count": "Peak players"
             },
@@ -685,7 +687,16 @@
                 "vrchat_config_description": "Open VRChat config.json settings",
                 "launch_options_description": "Edit VRChat launch options",
                 "registry_backup": "VRChat Registry Backup",
-                "registry_backup_description": "Create or restore a VRChat registry backup"
+                "registry_backup_description": "Create or restore a VRChat registry backup",
+                "bio_fetch": "Bio Completion Fetch",
+                "bio_fetch_description": "Scan all friends' cached bios and save any new or changed bios to the database",
+                "bio_fetch_hint": "Ready to scan {count} friends.",
+                "bio_fetch_start": "Start Fetch",
+                "bio_fetch_again": "Fetch Again",
+                "bio_fetch_cancel": "Cancel",
+                "bio_fetch_close": "Close",
+                "bio_fetch_progress": "Scanning {current} / {total}...",
+                "bio_fetch_done": "Done — saved {updated} new/changed bios out of {total} friends."
             },
             "other": {
                 "header": "Other",

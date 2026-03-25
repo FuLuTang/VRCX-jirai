@@ -20,6 +20,9 @@
     <AutoChangeStatusDialog
         :isAutoChangeStatusDialogVisible="autoChangeStatus"
         @close="closeDialog('autoChangeStatus')" />
+    <BioFetchDialog
+        :visible="bioFetch"
+        @close="closeDialog('bioFetch')" />
 </template>
 
 <script setup>
@@ -29,6 +32,7 @@
     import { useFriendStore, useToolsStore } from '../../../stores';
 
     import AutoChangeStatusDialog from '../dialogs/AutoChangeStatusDialog.vue';
+    import BioFetchDialog from '../dialogs/BioFetchDialog.vue';
     import RegistryBackupDialog from '../dialogs/RegistryBackupDialog.vue';
 
     import EditInviteMessageDialog from '../dialogs/EditInviteMessagesDialog.vue';
@@ -42,6 +46,7 @@
     const toolsStore = useToolsStore();
     const {
         autoChangeStatus,
+        bioFetch,
         editInviteMessages,
         exportAvatarsList,
         exportDiscordNames,

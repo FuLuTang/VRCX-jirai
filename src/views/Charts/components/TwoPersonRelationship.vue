@@ -19,10 +19,10 @@
                         :close-on-select="true"
                         :deselect-on-reselect="true">
                         <template #item="{ item, selected }">
-                            <div class="flex w-full items-center p-1.5 text-[13px]">
+                            <div class="flex w-full items-center p-1.5 in-[.is-compact-table]:p-1! text-[13px] in-[.is-compact-table]:text-[12px]!">
                                 <template v-if="item.user">
                                     <div
-                                        class="relative mr-2.5 inline-block size-9 flex-none"
+                                        class="relative mr-2.5 in-[.is-compact-table]:mr-1.5! inline-block size-9 in-[.is-compact-table]:size-7! in-[.is-comfortable-table]:size-8! flex-none"
                                         :class="userStatusClass(item.user)">
                                         <img
                                             class="size-full rounded-full object-cover"
@@ -67,10 +67,10 @@
                         :close-on-select="true"
                         :deselect-on-reselect="true">
                         <template #item="{ item, selected }">
-                            <div class="flex w-full items-center p-1.5 text-[13px]">
+                            <div class="flex w-full items-center p-1.5 in-[.is-compact-table]:p-1! text-[13px] in-[.is-compact-table]:text-[12px]!">
                                 <template v-if="item.user">
                                     <div
-                                        class="relative mr-2.5 inline-block size-9 flex-none"
+                                        class="relative mr-2.5 in-[.is-compact-table]:mr-1.5! inline-block size-9 in-[.is-compact-table]:size-7! in-[.is-comfortable-table]:size-8! flex-none"
                                         :class="userStatusClass(item.user)">
                                         <img
                                             class="size-full rounded-full object-cover"
@@ -105,27 +105,12 @@
                         </Button>
                     </TooltipWrapper>
 
-                    <Popover>
-                        <PopoverTrigger as-child>
-                            <div>
-                                <TooltipWrapper
-                                    :content="t('view.charts.two_person_relationship.settings')"
-                                    side="top">
-                                    <Button class="rounded-full" size="icon" variant="ghost">
-                                        <Settings class="size-4" />
-                                    </Button>
-                                </TooltipWrapper>
-                            </div>
-                        </PopoverTrigger>
-                        <PopoverContent side="bottom" align="end" class="w-60">
-                            <div class="flex items-center justify-between px-0.5 h-[30px]">
-                                <span class="shrink-0 text-sm">
-                                    {{ t('view.charts.two_person_relationship.show_self_presence') }}
-                                </span>
-                                <Switch v-model="showSelfPresence" />
-                            </div>
-                        </PopoverContent>
-                    </Popover>
+                    <div class="flex items-center justify-between px-0.5 h-[30px] gap-2">
+                        <span class="shrink-0 text-sm">
+                            {{ t('view.charts.two_person_relationship.show_self_presence') }}
+                        </span>
+                        <Switch v-model="showSelfPresence" />
+                    </div>
                 </div>
             </div>
 
@@ -147,29 +132,29 @@
             </div>
 
             <template v-else>
-                <div class="mx-auto mt-3 flex max-w-[900px] items-center gap-3">
-                    <div class="flex items-center gap-2 rounded-lg border px-3 py-2">
+                <div class="mx-auto mt-3 in-[.is-compact-table]:mt-1.5! in-[.is-comfortable-table]:mt-2! flex max-w-[900px] items-center gap-3">
+                    <div class="flex items-center gap-2 rounded-lg border px-3 py-2 in-[.is-compact-table]:py-1! in-[.is-comfortable-table]:py-1.5!">
                         <Clock class="size-3.5 text-muted-foreground" />
-                        <span class="text-sm font-medium">{{ timeToText(totalCoexistenceTime, true) }}</span>
+                        <span class="text-sm in-[.is-compact-table]:text-xs! font-medium">{{ timeToText(totalCoexistenceTime, true) }}</span>
                         <span class="text-xs text-muted-foreground">
                             {{ t('view.charts.two_person_relationship.total_coexistence_time') }}
                         </span>
                     </div>
-                    <div class="flex items-center gap-2 rounded-lg border px-3 py-2">
+                    <div class="flex items-center gap-2 rounded-lg border px-3 py-2 in-[.is-compact-table]:py-1! in-[.is-comfortable-table]:py-1.5!">
                         <Hash class="size-3.5 text-muted-foreground" />
-                        <span class="text-sm font-medium">{{ sharedInstances.length }}</span>
+                        <span class="text-sm in-[.is-compact-table]:text-xs! font-medium">{{ sharedInstances.length }}</span>
                         <span class="text-xs text-muted-foreground">
                             {{ t('view.charts.two_person_relationship.instance_count') }}
                         </span>
                     </div>
                 </div>
 
-                <div class="mx-auto mt-3 max-w-[900px]">
+                <div class="mx-auto mt-3 in-[.is-compact-table]:mt-1.5! in-[.is-comfortable-table]:mt-2! max-w-[900px]">
                     <button
                         v-for="(item, index) in sharedInstances"
                         :key="item.location + '_' + item.friendALeave"
                         type="button"
-                        class="group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-accent">
+                        class="group flex w-full items-center gap-3 rounded-lg px-3 py-2 in-[.is-compact-table]:py-1! in-[.is-comfortable-table]:py-1.5! text-left transition-colors hover:bg-accent">
                         <span class="w-6 shrink-0 text-right font-mono text-sm font-bold text-muted-foreground">
                             #{{ index + 1 }}
                         </span>
@@ -239,7 +224,6 @@
         Crown,
         Hash,
         RefreshCcw,
-        Settings,
         Users
     } from 'lucide-vue-next';
     import { storeToRefs } from 'pinia';
@@ -248,7 +232,6 @@
     import BackToTop from '@/components/BackToTop.vue';
     import { Button } from '@/components/ui/button';
     import { DataTableEmpty } from '@/components/ui/data-table';
-    import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
     import { Switch } from '@/components/ui/switch';
     import { VirtualCombobox } from '@/components/ui/virtual-combobox';
 

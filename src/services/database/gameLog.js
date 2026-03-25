@@ -389,6 +389,74 @@ const gameLog = {
         return ref;
     },
 
+    async getLastJoinTimeForUserAtLocation(input, location) {
+        let joinTime = null;
+        await sqliteService.execute(
+            (row) => {
+                const ts = Date.parse(row[0]);
+                if (!isNaN(ts)) {
+                    joinTime = ts;
+                }
+            },
+            `SELECT created_at FROM gamelog_join_leave WHERE type = 'OnPlayerJoined' AND (user_id = @userId OR display_name = @displayName) AND location = @location ORDER BY id DESC LIMIT 1`,
+            {
+                '@userId': input.id,
+                '@displayName': input.displayName,
+                '@location': location
+            }
+        );
+        return joinTime;
+    },
+
+    async getRecentlyMetUsers(currentUserId, limit = 20) {
+        const results = [];
+        await sqliteService.execute(
+            (row) => {
+                results.push({
+                    displayName: row[0],
+                    userId: row[1],
+                    lastSeen: row[2]
+                });
+            },
+            `SELECT display_name, user_id, MAX(created_at) AS last_seen
+             FROM gamelog_join_leave
+             WHERE type = 'OnPlayerJoined'
+               AND user_id != @currentUserId
+               AND user_id IS NOT NULL
+               AND user_id != ''
+             GROUP BY user_id
+             ORDER BY MAX(id) DESC
+             LIMIT @limit`,
+            {
+                '@currentUserId': currentUserId,
+                '@limit': limit
+            }
+        );
+        return results;
+    },
+
+    async getRecentlyJoinedLocations(limit = 10) {
+        const results = [];
+        await sqliteService.execute(
+            (row) => {
+                results.push({
+                    worldId: row[0],
+                    worldName: row[1],
+                    location: row[2],
+                    lastVisited: row[3]
+                });
+            },
+            `SELECT world_id, world_name, location, MAX(created_at) AS last_visited
+             FROM gamelog_location
+             WHERE world_id IS NOT NULL AND world_id != ''
+             GROUP BY world_id
+             ORDER BY MAX(id) DESC
+             LIMIT @limit`,
+            { '@limit': limit }
+        );
+        return results;
+    },
+
     async getJoinCount(input) {
         var ref = {
             joinCount: '',

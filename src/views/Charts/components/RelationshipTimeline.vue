@@ -5,7 +5,7 @@
 
             <!-- Header bar (consistent with InstanceActivity) -->
             <div class="options-container mt-0 flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-2 mb-4">
+                <div class="flex items-center gap-2 mb-4 in-[.is-compact-table]:mb-2! in-[.is-comfortable-table]:mb-3!">
                     <span class="shrink-0">{{ t('view.charts.relationship_timeline.header') }}</span>
                     <HoverCard>
                         <HoverCardTrigger as-child>
@@ -20,8 +20,8 @@
                 </div>
 
                 <div class="flex items-center gap-2 flex-wrap">
-                    <div class="flex items-center justify-between px-0.5 h-[30px]">
-                        <span class="shrink-0 text-sm">
+                    <div class="flex items-center justify-between px-0.5 h-[30px] in-[.is-compact-table]:h-[24px]! in-[.is-comfortable-table]:h-[26px]!">
+                        <span class="shrink-0 text-sm in-[.is-compact-table]:text-xs!">
                             {{ t('view.charts.relationship_timeline.settings.top_friends') }}
                         </span>
                         <div class="flex items-center gap-2 ml-3">
@@ -38,8 +38,8 @@
                             </span>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between px-0.5 h-[30px] gap-2">
-                        <span class="shrink-0 text-sm">
+                    <div class="flex items-center justify-between px-0.5 h-[30px] in-[.is-compact-table]:h-[24px]! in-[.is-comfortable-table]:h-[26px]! gap-2">
+                        <span class="shrink-0 text-sm in-[.is-compact-table]:text-xs!">
                             {{ t('view.charts.relationship_timeline.settings.show_others') }}
                         </span>
                         <Switch
@@ -154,15 +154,15 @@
         set: (v) => { friendCount.value = v[0]; }
     });
     /** Whether to include the "Others" band in the chart */
-    const showOthers = ref(true);
+    const showOthers = ref(false);
     /**
      * Non-linear scale slider (0-100).
      * Mapped to bucketDays = round(90 ^ (slider/100)).
      * - 0  →  1 day/bucket
-     * - 50 →  ~9 days/bucket
+     * - 51 → ~10 days/bucket (default)
      * - 100 → 90 days/bucket
      */
-    const scaleSlider = ref(0);
+    const scaleSlider = ref(51);
     const bucketDays = computed(() =>
         Math.max(1, Math.round(Math.pow(90, scaleSlider.value / 100)))
     );
@@ -240,8 +240,17 @@
     // ─── ECharts instance management ──────────────────────────────────────────
     let echartsInstance = null;
     let resizeObserver = null;
+    /** Cached DOM element so we can remove listeners even after the ref is cleared */
+    let chartDomElement = null;
+    /** Index of the series currently under the cursor (-1 = none) */
+    let currentHoveredSeriesIndex = -1;
 
     function disposeChart() {
+        if (chartDomElement) {
+            chartDomElement.removeEventListener('mousemove', onChartMouseMove);
+            chartDomElement.removeEventListener('mouseleave', onChartMouseLeave);
+            chartDomElement = null;
+        }
         if (resizeObserver) {
             resizeObserver.disconnect();
             resizeObserver = null;
@@ -252,6 +261,24 @@
         }
     }
 
+    /**
+     * Compute which series should be visible in the legend based on whether
+     * they have any non-zero values in the currently zoomed x-index range.
+     */
+    function computeLegendSelected(series, start, end, bucketCount) {
+        if (!series || !bucketCount) return {};
+        const startIdx = Math.floor((start / 100) * (bucketCount - 1));
+        const endIdx = Math.ceil((end / 100) * (bucketCount - 1));
+        const selected = {};
+        for (const s of series) {
+            const hasData =
+                Array.isArray(s.data) &&
+                s.data.some((v, i) => i >= startIdx && i <= endIdx && Number(v) > 0);
+            selected[s.name] = hasData;
+        }
+        return selected;
+    }
+
     function buildEChartsOption(chartData) {
         const { xLabels, series, bucketCount } = chartData;
         const isDark = isDarkMode.value;
@@ -259,6 +286,13 @@
             bucketCount,
             dataZoomRange.value,
             DEFAULT_VISIBLE_BUCKETS
+        );
+
+        const legendSelected = computeLegendSelected(
+            series,
+            zoomRange.start,
+            zoomRange.end,
+            bucketCount
         );
 
         return {
@@ -277,14 +311,19 @@
                         .sort((a, b) => b.value - a.value);
                     if (!items.length) return '';
                     const rows = items
-                        .map(
-                            (p) =>
-                                `<div style="display:flex;align-items:center;gap:6px;padding:1px 0">` +
+                        .map((p) => {
+                            const isHovered = p.seriesIndex === currentHoveredSeriesIndex;
+                            const rowBg = isHovered ? 'background:rgba(128,128,128,0.15);' : '';
+                            const nameBold = isHovered ? 'font-weight:700;' : '';
+                            const valWeight = isHovered ? '700' : '600';
+                            return (
+                                `<div style="display:flex;align-items:center;gap:6px;padding:2px 4px;border-radius:3px;${rowBg}">` +
                                 `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.color};flex-shrink:0"></span>` +
-                                `<span style="flex:1;font-size:12px">${p.seriesName}</span>` +
-                                `<span style="font-size:12px;font-weight:600;tabular-nums">${p.value.toFixed(1)}%</span>` +
+                                `<span style="flex:1;font-size:12px;${nameBold}">${p.seriesName}</span>` +
+                                `<span style="font-size:12px;font-weight:${valWeight};tabular-nums">${p.value.toFixed(1)}%</span>` +
                                 `</div>`
-                        )
+                            );
+                        })
                         .join('');
                     return header + rows;
                 }
@@ -292,12 +331,14 @@
             legend: {
                 top: 0,
                 type: 'scroll',
-                textStyle: { color: isDark ? '#ccc' : '#333', fontSize: 11 }
+                height: 44,
+                textStyle: { color: isDark ? '#ccc' : '#333', fontSize: 11 },
+                selected: legendSelected
             },
             grid: {
                 left: '3%',
                 right: '2%',
-                top: 40,
+                top: 58,
                 bottom: 80,
                 containLabel: true
             },
@@ -348,6 +389,19 @@
         };
     }
 
+    /**
+     * Lightweight legend-visibility update triggered on pan/zoom.
+     * Avoids a full chart rebuild — only mutates legend.selected.
+     */
+    function updateLegendVisibility(start, end) {
+        if (!echartsInstance) return;
+        const option = echartsInstance.getOption();
+        if (!option?.series?.length) return;
+        const bucketCount = option.xAxis?.[0]?.data?.length || 0;
+        const legendSelected = computeLegendSelected(option.series, start, end, bucketCount);
+        echartsInstance.setOption({ legend: [{ selected: legendSelected }] });
+    }
+
     function handleDataZoom(event) {
         let start = null;
         let end = null;
@@ -360,6 +414,78 @@
         }
         if (Number.isFinite(start) && Number.isFinite(end)) {
             dataZoomRange.value = { start, end };
+            updateLegendVisibility(start, end);
+        }
+    }
+
+    /**
+     * DOM mousemove handler: determines which stacked series is under the
+     * cursor and dispatches an ECharts highlight action so highlighting
+     * works even during purely horizontal mouse movement.
+     */
+    function onChartMouseMove(event) {
+        if (!echartsInstance || !chartDomElement) return;
+        const option = echartsInstance.getOption();
+        if (!option?.series?.length) return;
+
+        const rect = chartDomElement.getBoundingClientRect();
+        const pixelX = event.clientX - rect.left;
+        const pixelY = event.clientY - rect.top;
+
+        let xDataValue, yDataValue;
+        try {
+            xDataValue = echartsInstance.convertFromPixel({ xAxisIndex: 0 }, pixelX);
+            yDataValue = echartsInstance.convertFromPixel({ yAxisIndex: 0 }, pixelY);
+        } catch (_conversionError) {
+            // convertFromPixel throws when the chart is not ready or coords are out of range
+            return;
+        }
+
+        // Outside the chart grid area
+        if (!Number.isFinite(xDataValue) || !Number.isFinite(yDataValue)) {
+            if (currentHoveredSeriesIndex !== -1) {
+                currentHoveredSeriesIndex = -1;
+                echartsInstance.dispatchAction({ type: 'downplay' });
+            }
+            return;
+        }
+
+        const xLabelsLength = option.xAxis[0]?.data?.length || 0;
+        const xIndex = Math.round(Math.max(0, Math.min(xDataValue, xLabelsLength - 1)));
+
+        // Walk through series bottom-to-top (stack order = series array order).
+        // Skip series that are deselected (hidden via legend).
+        const legendSelected = option.legend?.[0]?.selected || {};
+        const allSeries = option.series;
+        let cumulative = 0;
+        let foundIdx = -1;
+        for (let i = 0; i < allSeries.length; i++) {
+            if (legendSelected[allSeries[i].name] === false) continue;
+            const rawVal = allSeries[i].data?.[xIndex];
+            const value =
+                rawVal != null && typeof rawVal === 'object'
+                    ? Number(rawVal.value) || 0
+                    : Number(rawVal) || 0;
+            cumulative += value;
+            if (foundIdx === -1 && yDataValue <= cumulative) {
+                foundIdx = i;
+            }
+        }
+
+        if (foundIdx !== currentHoveredSeriesIndex) {
+            currentHoveredSeriesIndex = foundIdx;
+            if (foundIdx >= 0) {
+                echartsInstance.dispatchAction({ type: 'highlight', seriesIndex: foundIdx });
+            } else {
+                echartsInstance.dispatchAction({ type: 'downplay' });
+            }
+        }
+    }
+
+    function onChartMouseLeave() {
+        if (currentHoveredSeriesIndex !== -1) {
+            currentHoveredSeriesIndex = -1;
+            echartsInstance?.dispatchAction({ type: 'downplay' });
         }
     }
 
@@ -371,17 +497,18 @@
     }
 
     /**
-     * Debounced version of rebuildChart — waits 1 second after the last
+     * Debounced version of rebuildChart — waits 0.5 seconds after the last
      * settings change before performing the potentially expensive rebuild.
      */
-    const debouncedRebuildChart = debounce(rebuildChart, 1000);
+    const debouncedRebuildChart = debounce(rebuildChart, 500);
 
     function initChart() {
         if (!chartDomRef.value) return;
         disposeChart();
 
+        chartDomElement = chartDomRef.value;
         echartsInstance = echarts.init(
-            chartDomRef.value,
+            chartDomElement,
             isDarkMode.value ? 'dark' : null,
             { renderer: 'canvas' }
         );
@@ -391,13 +518,16 @@
                 echartsInstance?.resize({ width: entry.contentRect.width });
             }
         });
-        resizeObserver.observe(chartDomRef.value);
+        resizeObserver.observe(chartDomElement);
 
         const chartData = buildChartData();
         if (chartData) {
             echartsInstance.setOption(buildEChartsOption(chartData), { notMerge: true });
         }
         echartsInstance.on('datazoom', handleDataZoom);
+
+        chartDomElement.addEventListener('mousemove', onChartMouseMove);
+        chartDomElement.addEventListener('mouseleave', onChartMouseLeave);
     }
 
     // ─── Data loading ─────────────────────────────────────────────────────────

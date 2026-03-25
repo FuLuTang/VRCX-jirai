@@ -97,6 +97,21 @@ export function applyUser(json) {
             const player = locationStore.lastLocation.playerList.get(json.id);
             ref.$location_at = player.joinTime;
             ref.$online_for = player.joinTime;
+        } else if (ref.isFriend && isRealInstance(ref.location)) {
+            // Restore $location_at from DB so the "time in instance" timer
+            // doesn't reset to zero after VRCX restarts.
+            const _ref = ref;
+            database
+                .getLastJoinTimeForUserAtLocation(
+                    { id: _ref.id, displayName: _ref.displayName },
+                    _ref.location
+                )
+                .then((joinTime) => {
+                    if (joinTime !== null && joinTime < Date.now()) {
+                        _ref.$location_at = joinTime;
+                    }
+                })
+                .catch(() => {});
         }
         if (ref.isFriend || ref.id === currentUser.id) {
             let newCount = state.instancePlayerCount.get(ref.location);
