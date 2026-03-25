@@ -5,7 +5,7 @@
 
             <!-- Header bar (consistent with InstanceActivity) -->
             <div class="options-container mt-0 flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-2 mb-4">
+                <div class="flex items-center gap-2 mb-4 in-[.is-compact-table]:mb-2! in-[.is-comfortable-table]:mb-3!">
                     <span class="shrink-0">{{ t('view.charts.relationship_timeline.header') }}</span>
                     <HoverCard>
                         <HoverCardTrigger as-child>
@@ -20,8 +20,8 @@
                 </div>
 
                 <div class="flex items-center gap-2 flex-wrap">
-                    <div class="flex items-center justify-between px-0.5 h-[30px]">
-                        <span class="shrink-0 text-sm">
+                    <div class="flex items-center justify-between px-0.5 h-[30px] in-[.is-compact-table]:h-[24px]! in-[.is-comfortable-table]:h-[26px]!">
+                        <span class="shrink-0 text-sm in-[.is-compact-table]:text-xs!">
                             {{ t('view.charts.relationship_timeline.settings.top_friends') }}
                         </span>
                         <div class="flex items-center gap-2 ml-3">
@@ -38,8 +38,8 @@
                             </span>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between px-0.5 h-[30px] gap-2">
-                        <span class="shrink-0 text-sm">
+                    <div class="flex items-center justify-between px-0.5 h-[30px] in-[.is-compact-table]:h-[24px]! in-[.is-comfortable-table]:h-[26px]! gap-2">
+                        <span class="shrink-0 text-sm in-[.is-compact-table]:text-xs!">
                             {{ t('view.charts.relationship_timeline.settings.show_others') }}
                         </span>
                         <Switch
@@ -497,7 +497,7 @@
     }
 
     /**
-     * Debounced version of rebuildChart — waits 0.5 second after the last
+     * Debounced version of rebuildChart — waits 0.5 seconds after the last
      * settings change before performing the potentially expensive rebuild.
      */
     const debouncedRebuildChart = debounce(rebuildChart, 500);
