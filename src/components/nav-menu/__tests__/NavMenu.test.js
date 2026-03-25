@@ -170,7 +170,7 @@ vi.mock('../../../shared/constants', () => ({
     },
     isToolNavKey: (key) => typeof key === 'string' && key.startsWith('tool-'),
     links: {
-        github: 'https://github.com/vrcx-team/VRCX'
+        github: 'https://github.com/FuLuTang/VRCX-jirai'
     },
     navDefinitions: [
         {

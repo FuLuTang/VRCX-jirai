@@ -149,7 +149,7 @@ describe('ChangelogDialog.vue', () => {
 
             await githubBtn.trigger('click');
             expect(openExternalLinkFn).toHaveBeenCalledWith(
-                'https://github.com/vrcx-team/VRCX/releases'
+                'https://github.com/FuLuTang/VRCX-jirai/releases'
             );
         });
 

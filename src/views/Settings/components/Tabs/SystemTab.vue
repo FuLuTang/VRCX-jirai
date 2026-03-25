@@ -124,10 +124,10 @@
         <SettingsGroup :title="t('view.settings.general.contributors.header')">
             <div>
                 <img
-                    src="https://contrib.rocks/image?repo=vrcx-team/VRCX"
+                    src="https://contrib.rocks/image?repo=FuLuTang/VRCX-jirai"
                     alt="Contributors"
                     class="cursor-pointer"
-                    @click="openExternalLink('https://github.com/vrcx-team/VRCX/graphs/contributors')" />
+                    @click="openExternalLink('https://github.com/FuLuTang/VRCX-jirai/graphs/contributors')" />
             </div>
         </SettingsGroup>
 

@@ -1,19 +1,19 @@
 {
-    "name": "VRCX",
+    "name": "VRCX-jirai",
     "private": true,
     "description": "Friendship management tool for VRChat",
     "keywords": [
         "vrchat"
     ],
-    "homepage": "https://github.com/vrcx-team/VRCX#readme",
+    "homepage": "https://github.com/FuLuTang/VRCX-jirai#readme",
     "bugs": {
-        "url": "https://github.com/vrcx-team/VRCX/issues"
+        "url": "https://github.com/FuLuTang/VRCX-jirai/issues"
     },
     "license": "MIT",
     "author": "VRCX Team",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/vrcx-team/VRCX.git"
+        "url": "git+https://github.com/FuLuTang/VRCX-jirai.git"
     },
     "main": "src-electron/main.js",
     "scripts": {
