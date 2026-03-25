@@ -10,7 +10,7 @@
                 </div>
             </div>
 
-            <div class="flex flex-col gap-0.5 px-1 py-1 cursor-pointer" @click="checkForVRCXUpdate">
+            <div class="flex flex-col gap-0.5 px-1 py-1 cursor-pointer" @click="openExternalLink('https://github.com/FuLuTang/VRCX-jirai/releases')">
                 <div class="flex-1">
                     <span class="block truncate font-medium text-sm leading-[18px]">{{
                         t('view.settings.general.general.latest_app_version')
@@ -19,9 +19,7 @@
                         v-if="latestAppVersion"
                         class="block truncate text-xs text-muted-foreground"
                         v-text="latestAppVersion"></span>
-                    <span v-else class="block truncate text-xs text-muted-foreground">{{
-                        t('view.settings.general.general.latest_app_version_refresh')
-                    }}</span>
+                    <span v-else class="block truncate text-xs text-muted-foreground">Click to view releases</span>
                 </div>
             </div>
 
@@ -49,7 +47,7 @@
                 <Button size="sm" variant="outline" @click="showChangeLogDialog">{{
                     t('view.settings.general.vrcx_updater.change_log')
                 }}</Button>
-                <Button v-if="!noUpdater" size="sm" variant="outline" @click="showVRCXUpdateDialog()">{{
+                <Button v-if="!noUpdater" size="sm" variant="outline" @click="openExternalLink('https://github.com/FuLuTang/VRCX-jirai/releases')">{{
                     t('view.settings.general.vrcx_updater.change_build')
                 }}</Button>
             </div>

@@ -283,106 +283,20 @@ export const useVRCXUpdaterStore = defineStore('VRCXUpdater', () => {
         return { downloadUrl, hashString, size };
     }
     async function checkForVRCXUpdate() {
-        if (
-            !currentVersion.value ||
-            currentVersion.value === 'VRCX Nightly Build' ||
-            currentVersion.value === 'VRCX Build'
-        ) {
-            // ignore custom builds
-            return false;
-        }
-        if (branch.value === 'Beta') {
-            // move Beta users to stable
-            setBranch('Stable');
-        }
-        if (typeof branches[branch.value] === 'undefined') {
-            // handle invalid branch
-            setBranch('Stable');
-        }
-        const url = branches[branch.value].urlLatest;
-        checkingForVRCXUpdate.value = true;
-        let response;
-        let json;
-        try {
-            response = await webApiService.execute({
-                url,
-                method: 'GET',
-                headers: {
-                    'VRCX-ID': vrcxId.value
-                }
-            });
-            json = JSON.parse(response.data);
-        } catch (error) {
-            console.error('Failed to check for VRCX update', error);
-            return false;
-        } finally {
-            checkingForVRCXUpdate.value = false;
-        }
-        if (response.status !== 200) {
-            toast.error(
-                t('message.vrcx_updater.failed', {
-                    message: `${response.status} ${response.data}`
-                })
-            );
-            return false;
-        }
-        pendingVRCXUpdate.value = false;
-        logWebRequest('[EXTERNAL GET]', url, `(${response.status})`, json);
-        if (json === Object(json) && json.name && json.published_at) {
-            changeLogDialog.value.buildName = json.name;
-            changeLogDialog.value.changeLog = changeLogRemoveLinks(json.body);
-            const releaseName = json.name;
-            setLatestAppVersion(releaseName);
-            VRCXUpdateDialog.value.updatePendingIsLatest = false;
-            if (autoUpdateVRCX.value === 'Off') {
-                return true;
-            }
-            if (releaseName === pendingVRCXInstall.value) {
-                // update already downloaded
-                VRCXUpdateDialog.value.updatePendingIsLatest = true;
-            } else if (releaseName > currentVersion.value) {
-                const { downloadUrl, hashString, size } = getAssetOfInterest(
-                    json.assets
-                );
-                if (!downloadUrl) {
-                    return true;
-                }
-                pendingVRCXUpdate.value = true;
-                if (updateToastRelease.value !== releaseName) {
-                    updateToastRelease.value = releaseName;
-                    toast(t('nav_menu.update_available'), {
-                        description: releaseName,
-                        duration: 5000,
-                        action: {
-                            label: t('nav_menu.update'),
-                            onClick: () => showVRCXUpdateDialog()
-                        }
-                    });
-                }
-                if (autoUpdateVRCX.value === 'Notify') {
-                    // this.showVRCXUpdateDialog();
-                } else if (autoUpdateVRCX.value === 'Auto Download') {
-                    await downloadVRCXUpdate(
-                        downloadUrl,
-                        hashString,
-                        size,
-                        releaseName
-                    );
-                }
-            }
-            return true;
-        }
+        /*
+         * [Jirai Edition Update Mechanism Planning]
+         * To properly implement auto-updates in the future without modifying C# double-zip extraction:
+         * 1. Nightly (Actions): Add a step in `.github/workflows/github_actions.yml` to extract `VRCX_Setup.exe`
+         *    and push it to a fixed "Nightly" or "Continuous Build" Pre-release on GitHub. This gives anonymous download access.
+         * 2. Stable (Releases): Point `settings.js` config to `https://api.github.com/repos/FuLuTang/VRCX-jirai/releases/latest`.
+         * 
+         * Currently: Disabling the original VRCX updater to prevent users' clients from downloading official VRCX updates 
+         * and overwriting/losing all jirai modifications. Clicking 'Update' in the UI will open the releases page instead.
+         */
         return false;
     }
     async function showVRCXUpdateDialog() {
-        const D = VRCXUpdateDialog.value;
-        D.visible = true;
-        D.updatePendingIsLatest = false;
-        D.updatePending = await AppApi.CheckForUpdateExe();
-        if (updateInProgress.value) {
-            return;
-        }
-        await loadBranchVersions();
+        return false;
     }
 
     async function loadBranchVersions() {
