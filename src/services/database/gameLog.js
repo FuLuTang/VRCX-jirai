@@ -389,6 +389,25 @@ const gameLog = {
         return ref;
     },
 
+    async getLastJoinTimeForUserAtLocation(input, location) {
+        let joinTime = null;
+        await sqliteService.execute(
+            (row) => {
+                const ts = Date.parse(row[0]);
+                if (!isNaN(ts)) {
+                    joinTime = ts;
+                }
+            },
+            `SELECT created_at FROM gamelog_join_leave WHERE type = 'OnPlayerJoined' AND (user_id = @userId OR display_name = @displayName) AND location = @location ORDER BY id DESC LIMIT 1`,
+            {
+                '@userId': input.id,
+                '@displayName': input.displayName,
+                '@location': location
+            }
+        );
+        return joinTime;
+    },
+
     async getJoinCount(input) {
         var ref = {
             joinCount: '',
