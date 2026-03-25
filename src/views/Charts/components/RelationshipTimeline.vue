@@ -46,6 +46,14 @@
                             v-model="showOthers"
                             @update:modelValue="debouncedRebuildChart" />
                     </div>
+                    <div class="flex items-center justify-between px-0.5 h-[30px] in-[.is-compact-table]:h-[24px]! in-[.is-comfortable-table]:h-[26px]! gap-2">
+                        <span class="shrink-0 text-sm in-[.is-compact-table]:text-xs!">
+                            {{ t('view.charts.relationship_timeline.settings.show_friends_only') }}
+                        </span>
+                        <Switch
+                            v-model="showFriendsOnly"
+                            @update:modelValue="debouncedRebuildChart" />
+                    </div>
                     <!-- Refresh button -->
                     <TooltipWrapper :content="t('view.charts.relationship_timeline.refresh')" side="top">
                         <Button
@@ -155,6 +163,8 @@
     });
     /** Whether to include the "Others" band in the chart */
     const showOthers = ref(false);
+    /** Whether to only show current friends (exclude non-friends) */
+    const showFriendsOnly = ref(false);
     /**
      * Non-linear scale slider (0-100).
      * Mapped to bucketDays = round(90 ^ (slider/100)).
@@ -226,7 +236,17 @@
 
     // ─── Chart data computation ────────────────────────────────────────────────
     function buildChartData() {
-        const aggregation = aggregateFriendDaysToBuckets(perFriendDays.value, bucketDays.value);
+        let data = perFriendDays.value;
+        if (showFriendsOnly.value) {
+            const filtered = new Map();
+            for (const [userId, entry] of data.entries()) {
+                if (friends.value.has(userId)) {
+                    filtered.set(userId, entry);
+                }
+            }
+            data = filtered;
+        }
+        const aggregation = aggregateFriendDaysToBuckets(data, bucketDays.value);
         return buildPerBucketTopNPercentageSeries({
             aggregation,
             friendCount: friendCount.value,
@@ -262,21 +282,21 @@
     }
 
     /**
-     * Compute which series should be visible in the legend based on whether
+     * Compute which series names should appear in the legend based on whether
      * they have any non-zero values in the currently zoomed x-index range.
+     * Returns an array of series names to pass as legend.data.
      */
-    function computeLegendSelected(series, start, end, bucketCount) {
-        if (!series || !bucketCount) return {};
+    function computeLegendData(series, start, end, bucketCount) {
+        if (!series || !bucketCount) return series?.map((s) => s.name) || [];
         const startIdx = Math.floor((start / 100) * (bucketCount - 1));
         const endIdx = Math.ceil((end / 100) * (bucketCount - 1));
-        const selected = {};
-        for (const s of series) {
-            const hasData =
-                Array.isArray(s.data) &&
-                s.data.some((v, i) => i >= startIdx && i <= endIdx && Number(v) > 0);
-            selected[s.name] = hasData;
-        }
-        return selected;
+        return series
+            .filter(
+                (s) =>
+                    Array.isArray(s.data) &&
+                    s.data.some((v, i) => i >= startIdx && i <= endIdx && Number(v) > 0)
+            )
+            .map((s) => s.name);
     }
 
     function buildEChartsOption(chartData) {
@@ -288,7 +308,7 @@
             DEFAULT_VISIBLE_BUCKETS
         );
 
-        const legendSelected = computeLegendSelected(
+        const legendData = computeLegendData(
             series,
             zoomRange.start,
             zoomRange.end,
@@ -331,14 +351,14 @@
             legend: {
                 top: 0,
                 type: 'scroll',
-                height: 44,
+                height: 66,
                 textStyle: { color: isDark ? '#ccc' : '#333', fontSize: 11 },
-                selected: legendSelected
+                data: legendData
             },
             grid: {
                 left: '3%',
                 right: '2%',
-                top: 58,
+                top: 82,
                 bottom: 80,
                 containLabel: true
             },
@@ -391,15 +411,15 @@
 
     /**
      * Lightweight legend-visibility update triggered on pan/zoom.
-     * Avoids a full chart rebuild — only mutates legend.selected.
+     * Avoids a full chart rebuild — only mutates legend.data.
      */
     function updateLegendVisibility(start, end) {
         if (!echartsInstance) return;
         const option = echartsInstance.getOption();
         if (!option?.series?.length) return;
         const bucketCount = option.xAxis?.[0]?.data?.length || 0;
-        const legendSelected = computeLegendSelected(option.series, start, end, bucketCount);
-        echartsInstance.setOption({ legend: [{ selected: legendSelected }] });
+        const legendData = computeLegendData(option.series, start, end, bucketCount);
+        echartsInstance.setOption({ legend: [{ data: legendData }] });
     }
 
     function handleDataZoom(event) {
