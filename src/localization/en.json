@@ -634,7 +634,8 @@
                 "settings": {
                     "header": "Settings",
                     "top_friends": "Top friends",
-                    "show_others": "Show Others"
+                    "show_others": "Show Others",
+                    "show_friends_only": "Friends Only"
                 }
             }
         },

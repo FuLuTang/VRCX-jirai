@@ -473,7 +473,8 @@
                 "settings": {
                     "header": "设置",
                     "top_friends": "显示好友数",
-                    "show_others": "显示其他"
+                    "show_others": "显示其他",
+                    "show_friends_only": "仅显示好友"
                 }
             }
         },

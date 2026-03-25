@@ -3,12 +3,10 @@
         <div ref="twoPersonRef" class="pt-4">
             <BackToTop :target="twoPersonRef" :right="30" :bottom="30" :teleport="false" />
 
-            <div class="options-container mt-0 flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
-                    <span class="shrink-0">{{ t('view.charts.two_person_relationship.header') }}</span>
-                </div>
+            <div class="options-container mt-0 flex flex-wrap items-center gap-2">
+                <span class="shrink-0">{{ t('view.charts.two_person_relationship.header') }}</span>
 
-                <div class="flex flex-wrap items-center gap-2">
+                <div class="flex flex-nowrap items-center gap-2">
                     <VirtualCombobox
                         class="w-56"
                         :model-value="selectedFriendAId"
@@ -93,24 +91,24 @@
                             </div>
                         </template>
                     </VirtualCombobox>
+                </div>
 
-                    <TooltipWrapper :content="t('view.charts.instance_activity.refresh')" side="top">
-                        <Button
-                            class="rounded-full"
-                            size="icon"
-                            variant="ghost"
-                            :disabled="!selectedFriendAId || !selectedFriendBId || isLoading"
-                            @click="loadData">
-                            <RefreshCcw />
-                        </Button>
-                    </TooltipWrapper>
+                <TooltipWrapper :content="t('view.charts.instance_activity.refresh')" side="top">
+                    <Button
+                        class="rounded-full"
+                        size="icon"
+                        variant="ghost"
+                        :disabled="!selectedFriendAId || !selectedFriendBId || isLoading"
+                        @click="loadData">
+                        <RefreshCcw />
+                    </Button>
+                </TooltipWrapper>
 
-                    <div class="flex items-center justify-between px-0.5 h-[30px] gap-2">
-                        <span class="shrink-0 text-sm">
-                            {{ t('view.charts.two_person_relationship.show_self_presence') }}
-                        </span>
-                        <Switch v-model="showSelfPresence" />
-                    </div>
+                <div class="flex items-center justify-between px-0.5 h-[30px] gap-2">
+                    <span class="shrink-0 text-sm">
+                        {{ t('view.charts.two_person_relationship.show_self_presence') }}
+                    </span>
+                    <Switch v-model="showSelfPresence" />
                 </div>
             </div>
 
