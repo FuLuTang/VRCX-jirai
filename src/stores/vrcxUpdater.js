@@ -140,7 +140,7 @@ export const useVRCXUpdaterStore = defineStore('VRCXUpdater', () => {
         if (!appVersion.value) {
             return;
         }
-        if (currentVersion.value.includes('VRCX Nightly')) {
+        if (currentVersion.value.includes('VRCX-Jirai Nightly')) {
             branch.value = 'Nightly';
         } else {
             branch.value = 'Stable';

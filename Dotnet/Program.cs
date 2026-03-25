@@ -72,14 +72,14 @@ namespace VRCX
                 // look for trailing git hash "-22bcd96" to indicate nightly build
                 var version = versionFile.Split('-');
                 if (version.Length > 0 && version[^1].Length == 7)
-                    Version = $"VRCX Nightly {versionFile}";
+                    Version = $"VRCX-Jirai Nightly {versionFile}";
                 else
-                    Version = $"VRCX {versionFile}";
+                    Version = $"VRCX-Jirai {versionFile}";
             }
             catch (Exception ex)
             {
                 logger.Error(ex, "Failed to read version file");
-                Version = "VRCX Nightly Build";
+                Version = "VRCX-Jirai Nightly Build";
             }
         }
 
