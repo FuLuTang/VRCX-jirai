@@ -615,8 +615,8 @@
                 "meet_count": "{count} encounters",
                 "settings": "Settings",
                 "show_self_presence": "Show my presence indicator",
-                "self_present": "I was present",
-                "self_not_present": "I was absent",
+                "self_present": "Present",
+                "self_not_present": "Absent",
                 "instance_creator": "Creator",
                 "max_player_count": "Peak players"
             },
