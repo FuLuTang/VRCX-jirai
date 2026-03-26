@@ -35,7 +35,7 @@ export const useAutoFollowStore = defineStore('AutoFollow', () => {
         unwatchFriend = watch(
             () => {
                 const f = friendStore.friends.get(targetFriendId.value);
-                return f ? f.location : null;
+                return f ? f.ref?.location : null;
             },
             async (newLocation) => {
                 if (!isActive.value || !newLocation) return;

@@ -16,27 +16,27 @@
                         class="flex items-center p-2 rounded-lg hover:bg-muted cursor-pointer transition-colors"
                         @click="selectFriend(friend)"
                     >
-                        <div class="relative block h-10 w-10 flex-none mr-3" :class="userStatusClass(friend)">
+                        <div class="relative block h-10 w-10 flex-none mr-3" :class="userStatusClass(friend.ref)">
                             <Avatar class="h-full w-full rounded-full">
-                                <AvatarImage :src="userImage(friend)" class="object-cover" />
+                                <AvatarImage :src="userImage(friend.ref)" class="object-cover" />
                                 <AvatarFallback>
                                     <User class="h-5 w-5 text-muted-foreground" />
                                 </AvatarFallback>
                             </Avatar>
                         </div>
                         <div class="flex-1 overflow-hidden">
-                            <span class="block truncate font-medium text-sm" :style="{ color: friend.$userColour }">
-                                {{ friend.displayName }}
+                            <span class="block truncate font-medium text-sm" :style="{ color: friend.ref?.$userColour }">
+                                {{ friend.ref?.displayName }}
                             </span>
                             <span class="block truncate text-xs text-muted-foreground">
                                 <Location
-                                    v-if="isRealInstance(friend.$locationTag) || isRealInstance(friend.$travelingToLocation)"
-                                    :location="friend.$locationTag"
-                                    :traveling="friend.$travelingToLocation"
+                                    v-if="isRealInstance(friend.ref?.$locationTag) || isRealInstance(friend.ref?.$travelingToLocation)"
+                                    :location="friend.ref?.$locationTag"
+                                    :traveling="friend.ref?.$travelingToLocation"
                                     :link="false"
                                 />
                                 <template v-else>
-                                    {{ friend.statusDescription || friend.status }}
+                                    {{ friend.ref?.statusDescription || friend.ref?.status }}
                                 </template>
                             </span>
                         </div>
@@ -96,12 +96,12 @@ const { userImage, userStatusClass } = useUserDisplay();
 
 const availableFriends = computed(() => {
     return onlineFriends.value.filter(f => {
-        return f.state === 'online' && (f.status === 'join me' || f.status === 'active');
+        return f.ref?.status === 'join me' || f.ref?.status === 'active';
     });
 });
 
 function selectFriend(friend) {
-    autoFollowStore.startFollow(friend);
+    autoFollowStore.startFollow(friend.ref);
     emit('update:open', false);
 }
 </script>

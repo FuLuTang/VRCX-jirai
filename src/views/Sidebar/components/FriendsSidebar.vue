@@ -197,11 +197,12 @@
 
         <div class="absolute bottom-5 right-[70px] z-10">
             <button
-                class="px-3 py-1.5 rounded-md shadow-lg text-white font-medium text-sm transition-colors"
+                class="px-3 py-1.5 rounded-full shadow-lg text-white font-medium text-sm transition-colors inline-flex items-center gap-1.5"
                 :class="autoFollowStore.isActive ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-500 hover:bg-blue-600'"
                 @click="toggleAutoFollow"
             >
                 {{ autoFollowStore.isActive ? '跟随中 ■' : '自动跟随' }}
+                <Navigation class="w-3.5 h-3.5" />
             </button>
         </div>
         <AutoFollowDialog
@@ -213,7 +214,7 @@
 
 <script setup>
     import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
-    import { ChevronDown, Clock, User } from 'lucide-vue-next';
+    import { ChevronDown, Clock, Navigation, User } from 'lucide-vue-next';
     import { storeToRefs } from 'pinia';
     import { toast } from 'vue-sonner';
     import { useI18n } from 'vue-i18n';
