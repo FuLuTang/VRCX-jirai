@@ -1,0 +1,441 @@
+// ============================================================
+// VRCX Database ERD - for dbdiagram.io
+// Generated from src/services/database/index.js
+//
+// (pri) = User-specific table  →  actual name: {userPrefix}_xxx
+// (pub) = Global shared table  →  actual name: xxx
+// ============================================================
+
+
+// ─── USER-SPECIFIC TABLES (pri) ─────────────────────────────
+
+// Represents the current friend list snapshot for the logged-in user
+Table pri_friend_log_current [note: "(pri) {prefix}_friend_log_current"] {
+  user_id      text [pk, note: "VRChat user ID of the friend"]
+  display_name text
+  trust_level  text
+  friend_number integer
+}
+
+// History of friend relationship changes (add/remove/rename/trust)
+Table pri_friend_log_history [note: "(pri) {prefix}_friend_log_history"] {
+  id                    integer [pk, increment]
+  created_at            text
+  type                  text    [note: "e.g. Friend, UnFriend, DisplayName, TrustLevel"]
+  user_id               text
+  display_name          text
+  previous_display_name text
+  trust_level           text
+  previous_trust_level  text
+  friend_number         integer
+}
+
+// Friend GPS / location change feed
+Table pri_feed_gps [note: "(pri) {prefix}_feed_gps"] {
+  id                integer [pk, increment]
+  created_at        text
+  user_id           text
+  display_name      text
+  location          text
+  world_name        text
+  previous_location text
+  time              integer [note: "Duration in ms spent at previous location"]
+  group_name        text
+}
+
+// Friend status change feed
+Table pri_feed_status [note: "(pri) {prefix}_feed_status"] {
+  id                           integer [pk, increment]
+  created_at                   text
+  user_id                      text
+  display_name                 text
+  status                       text
+  status_description           text
+  previous_status              text
+  previous_status_description  text
+}
+
+// Friend bio change feed
+Table pri_feed_bio [note: "(pri) {prefix}_feed_bio"] {
+  id           integer [pk, increment]
+  created_at   text
+  user_id      text
+  display_name text
+  bio          text
+  previous_bio text
+}
+
+// Friend avatar change feed
+Table pri_feed_avatar [note: "(pri) {prefix}_feed_avatar"] {
+  id                                      integer [pk, increment]
+  created_at                              text
+  user_id                                 text
+  display_name                            text
+  owner_id                                text
+  avatar_name                             text
+  current_avatar_image_url                text
+  current_avatar_thumbnail_image_url      text
+  previous_current_avatar_image_url       text
+  previous_current_avatar_thumbnail_image_url text
+}
+
+// Friend online/offline event feed
+Table pri_feed_online_offline [note: "(pri) {prefix}_feed_online_offline"] {
+  id           integer [pk, increment]
+  created_at   text
+  user_id      text
+  display_name text
+  type         text    [note: "Online | Offline"]
+  location     text
+  world_name   text
+  time         integer [note: "Duration online in ms"]
+  group_name   text
+}
+
+// Incremental sync state for activity tracking (per friend)
+Table pri_activity_sync_state_v2 [note: "(pri) {prefix}_activity_sync_state_v2"] {
+  user_id                  text [pk]
+  updated_at               text
+  is_self                  integer [note: "1 if this row tracks the logged-in user"]
+  source_last_created_at   text
+  pending_session_start_at integer
+  cached_range_days        integer
+}
+
+// Computed online session windows for activity heatmap
+Table pri_activity_sessions_v2 [note: "(pri) {prefix}_activity_sessions_v2"] {
+  session_id      integer [pk, increment]
+  user_id         text
+  start_at        integer [note: "Unix timestamp ms"]
+  end_at          integer [note: "Unix timestamp ms"]
+  is_open_tail    integer [note: "1 = session still ongoing"]
+  source_revision text
+}
+
+// Pre-computed activity bucket cache for charts
+Table pri_activity_bucket_cache_v2 [note: "(pri) {prefix}_activity_bucket_cache_v2"] {
+  user_id                 text [note: "Composite PK"]
+  target_user_id          text [note: "Composite PK"]
+  range_days              integer [note: "Composite PK"]
+  view_kind               text    [note: "Composite PK"]
+  exclude_key             text    [note: "Composite PK"]
+  bucket_version          integer
+  raw_buckets_json        text
+  normalized_buckets_json text
+  built_from_cursor       text
+  summary_json            text
+  built_at                text
+
+  indexes {
+    (user_id, target_user_id, range_days, view_kind, exclude_key) [pk]
+  }
+}
+
+// Received VRChat notifications (legacy format)
+Table pri_notifications [note: "(pri) {prefix}_notifications"] {
+  id               text [pk, note: "VRChat notification ID"]
+  created_at       text
+  type             text
+  sender_user_id   text
+  sender_username  text
+  receiver_user_id text
+  message          text
+  world_id         text
+  world_name       text
+  image_url        text
+  invite_message   text
+  request_message  text
+  response_message text
+  expired          integer
+}
+
+// Received VRChat notifications (v2 format)
+Table pri_notifications_v2 [note: "(pri) {prefix}_notifications_v2"] {
+  id              text [pk]
+  created_at      text
+  updated_at      text
+  expires_at      text
+  type            text
+  link            text
+  link_text       text
+  message         text
+  title           text
+  image_url       text
+  seen            integer
+  sender_user_id  text
+  sender_username text
+  data            text
+  responses       text
+  details         text
+}
+
+// Block/mute list for the logged-in user
+Table pri_moderation [note: "(pri) {prefix}_moderation"] {
+  user_id      text [pk]
+  updated_at   text
+  display_name text
+  block        integer
+  mute         integer
+}
+
+// Avatar wear history
+Table pri_avatar_history [note: "(pri) {prefix}_avatar_history"] {
+  avatar_id  text [pk]
+  created_at text
+  time       integer [note: "Total wear time in ms"]
+}
+
+// Per-friend notes written by the logged-in user
+Table pri_notes [note: "(pri) {prefix}_notes"] {
+  user_id      text [pk]
+  display_name text
+  note         text
+  created_at   text
+}
+
+// ── Mutual Friend Graph ──────────────────────────────────────
+
+// Scanned friend nodes for the mutual friend graph
+Table pri_mutual_graph_friends [note: "(pri) {prefix}_mutual_graph_friends"] {
+  friend_id text [pk]
+}
+
+// Edges: friend_id ↔ mutual_id are both in each other's friend list
+Table pri_mutual_graph_links [note: "(pri) {prefix}_mutual_graph_links"] {
+  friend_id text [not null]
+  mutual_id text [not null]
+
+  indexes {
+    (friend_id, mutual_id) [pk]
+  }
+}
+
+// NEW (PR #21): Dated edge history - when the mutual link was last confirmed
+Table pri_mutual_graph_links_old [note: "(pri) {prefix}_mutual_graph_links_old  🆕 PR#21"] {
+  friend_id text [not null]
+  mutual_id text [not null]
+  date      text [not null, note: "ISO date of last confirmed mutual link"]
+
+  indexes {
+    (friend_id, mutual_id) [pk]
+  }
+}
+
+// NEW (PR #21): Per-friend last sync timestamp for stale badge detection
+Table pri_mutual_graph_friends_old [note: "(pri) {prefix}_mutual_graph_friends_old  🆕 PR#21"] {
+  friend_id    text [pk]
+  last_updated text [not null, note: "ISO datetime of last API fetch"]
+}
+
+
+// ─── GLOBAL SHARED TABLES (pub) ──────────────────────────────
+
+// Game log: instances the current user entered
+Table pub_gamelog_location [note: "(pub) gamelog_location"] {
+  id         integer [pk, increment]
+  created_at text    [note: "Timestamp when user left the instance"]
+  location   text    [note: "Instance location string"]
+  world_id   text
+  world_name text
+  time       integer [note: "Duration in ms"]
+  group_name text
+
+  indexes {
+    created_at
+    (world_id, created_at)
+  }
+}
+
+// Game log: all OnPlayerJoined / OnPlayerLeft events in the user's instances
+Table pub_gamelog_join_leave [note: "(pub) gamelog_join_leave"] {
+  id           integer [pk, increment]
+  created_at   text
+  type         text    [note: "OnPlayerJoined | OnPlayerLeft"]
+  display_name text
+  location     text
+  user_id      text
+  time         integer [note: "Time the player was in the instance (ms), for OnPlayerLeft"]
+
+  indexes {
+    location
+    (user_id, created_at)
+    (display_name, created_at)
+  }
+}
+
+// Game log: portal spawns observed by the current user
+Table pub_gamelog_portal_spawn [note: "(pub) gamelog_portal_spawn"] {
+  id           integer [pk, increment]
+  created_at   text
+  display_name text
+  location     text
+  user_id      text
+  instance_id  text
+  world_name   text
+}
+
+// Game log: videos played in instances
+Table pub_gamelog_video_play [note: "(pub) gamelog_video_play"] {
+  id           integer [pk, increment]
+  created_at   text
+  video_url    text
+  video_name   text
+  video_id     text
+  location     text
+  display_name text
+  user_id      text
+}
+
+// Game log: external URL / image resource loads (firewall tracking)
+Table pub_gamelog_resource_load [note: "(pub) gamelog_resource_load"] {
+  id            integer [pk, increment]
+  created_at    text
+  resource_url  text
+  resource_type text
+  location      text
+}
+
+// Game log: custom Udon events
+Table pub_gamelog_event [note: "(pub) gamelog_event"] {
+  id         integer [pk, increment]
+  created_at text
+  data       text
+}
+
+// Game log: external chat / SDK messages
+Table pub_gamelog_external [note: "(pub) gamelog_external"] {
+  id           integer [pk, increment]
+  created_at   text
+  message      text
+  display_name text
+  user_id      text
+  location     text
+}
+
+// Cache: VRChat avatar metadata
+Table pub_cache_avatar [note: "(pub) cache_avatar"] {
+  id                       text [pk, note: "VRChat avatar ID"]
+  added_at                 text
+  author_id                text
+  author_name              text
+  created_at               text
+  description              text
+  image_url                text
+  name                     text
+  release_status           text
+  thumbnail_image_url      text
+  updated_at               text
+  version                  integer
+}
+
+// Cache: VRChat world metadata
+Table pub_cache_world [note: "(pub) cache_world"] {
+  id                  text [pk, note: "VRChat world ID"]
+  added_at            text
+  author_id           text
+  author_name         text
+  created_at          text
+  description         text
+  image_url           text
+  name                text
+  release_status      text
+  thumbnail_image_url text
+  updated_at          text
+  version             integer
+}
+
+// VRChat favorited worlds (synced from VRC server)
+Table pub_favorite_world [note: "(pub) favorite_world"] {
+  id         integer [pk, increment]
+  created_at text
+  world_id   text
+  group_name text
+}
+
+// VRChat favorited avatars
+Table pub_favorite_avatar [note: "(pub) favorite_avatar"] {
+  id         integer [pk, increment]
+  created_at text
+  avatar_id  text
+  group_name text
+}
+
+// VRChat favorited friends
+Table pub_favorite_friend [note: "(pub) favorite_friend"] {
+  id         integer [pk, increment]
+  created_at text
+  user_id    text
+  group_name text
+}
+
+// User-written memos about other users (global, legacy)
+Table pub_memos [note: "(pub) memos"] {
+  user_id   text [pk]
+  edited_at text
+  memo      text
+}
+
+// User-written memos about worlds
+Table pub_world_memos [note: "(pub) world_memos"] {
+  world_id  text [pk]
+  edited_at text
+  memo      text
+}
+
+// User-written memos about avatars
+Table pub_avatar_memos [note: "(pub) avatar_memos"] {
+  avatar_id text [pk]
+  edited_at text
+  memo      text
+}
+
+// Custom color tags applied to avatars
+Table pub_avatar_tags [note: "(pub) avatar_tags"] {
+  avatar_id text [not null]
+  tag       text [not null]
+  color     text
+
+  indexes {
+    (avatar_id, tag) [pk]
+  }
+}
+
+
+// ─── RELATIONSHIPS ───────────────────────────────────────────
+
+// Friend feed relationships (user_id → friend tables)
+Ref: pri_friend_log_current.user_id < pri_friend_log_history.user_id
+Ref: pri_friend_log_current.user_id < pri_feed_gps.user_id
+Ref: pri_friend_log_current.user_id < pri_feed_status.user_id
+Ref: pri_friend_log_current.user_id < pri_feed_bio.user_id
+Ref: pri_friend_log_current.user_id < pri_feed_avatar.user_id
+Ref: pri_friend_log_current.user_id < pri_feed_online_offline.user_id
+Ref: pri_friend_log_current.user_id < pri_moderation.user_id
+Ref: pri_friend_log_current.user_id < pri_notes.user_id
+Ref: pri_friend_log_current.user_id < pri_activity_sync_state_v2.user_id
+Ref: pri_friend_log_current.user_id < pri_activity_sessions_v2.user_id
+
+// Notification sender/receiver
+Ref: pri_friend_log_current.user_id < pri_notifications.sender_user_id
+Ref: pri_friend_log_current.user_id < pri_notifications.receiver_user_id
+
+// Mutual graph
+Ref: pri_mutual_graph_friends.friend_id < pri_mutual_graph_links.friend_id
+Ref: pri_mutual_graph_friends.friend_id < pri_mutual_graph_links.mutual_id
+Ref: pri_mutual_graph_friends_old.friend_id < pri_mutual_graph_links_old.friend_id
+Ref: pri_mutual_graph_friends_old.friend_id < pri_mutual_graph_links_old.mutual_id
+
+// Game log: location → join/leave events
+Ref: pub_gamelog_location.location < pub_gamelog_join_leave.location
+
+// Caches → favorites
+Ref: pub_cache_world.id < pub_favorite_world.world_id
+Ref: pub_cache_avatar.id < pub_favorite_avatar.avatar_id
+
+// Caches → memos/tags
+Ref: pub_cache_world.id < pub_world_memos.world_id
+Ref: pub_cache_avatar.id < pub_avatar_memos.avatar_id
+Ref: pub_cache_avatar.id < pub_avatar_tags.avatar_id
+
+// Caches ← gamelog (loose reference, no FK enforcement in SQLite)
+Ref: pub_cache_world.id < pub_gamelog_location.world_id
