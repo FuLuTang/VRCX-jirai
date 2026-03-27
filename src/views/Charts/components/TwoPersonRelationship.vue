@@ -200,6 +200,16 @@
                             }}
                         </span>
 
+                        <span
+                            :class="[
+                                'shrink-0 rounded px-1.5 py-0.5 text-xs font-medium',
+                                item.initiator === 'mutual'
+                                    ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
+                                    : 'bg-orange-500/15 text-orange-600 dark:text-orange-400'
+                            ]">
+                            {{ t('view.charts.two_person_relationship.initiator_' + item.initiator) }}
+                        </span>
+
                         <div class="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
                             <Clock class="size-3 shrink-0" />
                             <span class="font-medium tabular-nums">{{ timeToText(item.coexistenceTime, true) }}</span>
@@ -339,6 +349,22 @@
 
     const sharedInstances = computed(() => {
         const dateFormat = dtHour12.value ? 'YYYY-MM-DD hh:mm A' : 'YYYY-MM-DD HH:mm';
+        const THREE_MINUTES = 3 * 60 * 1000;
+
+        // First pass: find the earliest overlap start per location to determine the initiator
+        const firstMeetingByLocation = new Map();
+        for (const row of rawResults.value) {
+            const aLeave = dayjs(row.friendALeave).valueOf();
+            const bLeave = dayjs(row.friendBLeave).valueOf();
+            const aJoin = aLeave - Math.max(0, row.friendATime);
+            const bJoin = bLeave - Math.max(0, row.friendBTime);
+            const overlapStart = Math.max(aJoin, bJoin);
+            const existing = firstMeetingByLocation.get(row.location);
+            if (!existing || overlapStart < existing.overlapStart) {
+                firstMeetingByLocation.set(row.location, { overlapStart, aJoin, bJoin });
+            }
+        }
+
         return rawResults.value
             .map((row) => {
                 const friendATime = Math.max(0, row.friendATime);
@@ -362,6 +388,16 @@
                 // Self presence during overlap
                 const selfPresent = computeSelfPresent(row.location, overlapStart, overlapEnd);
 
+                // Initiator (主动方): based on who joined later at the first meeting in this instance
+                const first = firstMeetingByLocation.get(row.location);
+                let initiator = 'mutual';
+                if (first) {
+                    const joinTimeDiffMs = Math.abs(first.aJoin - first.bJoin);
+                    if (joinTimeDiffMs > THREE_MINUTES) {
+                        initiator = first.aJoin > first.bJoin ? 'leftPlayer' : 'rightPlayer';
+                    }
+                }
+
                 return {
                     location: row.location,
                     friendALeave: friendALeaveMs,
@@ -369,7 +405,8 @@
                     formattedDate: dayjs(friendALeaveMs).format(dateFormat),
                     instanceCreatorName,
                     maxPlayerCount,
-                    selfPresent
+                    selfPresent,
+                    initiator
                 };
             })
             .filter((item) => item.coexistenceTime > 0)

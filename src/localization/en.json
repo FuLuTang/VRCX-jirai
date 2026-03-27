@@ -620,7 +620,10 @@
                 "self_present": "Present",
                 "self_not_present": "Absent",
                 "instance_creator": "Creator",
-                "max_player_count": "Peak players"
+                "max_player_count": "Peak players",
+                "initiator_leftPlayer": "Left Player",
+                "initiator_rightPlayer": "Right Player",
+                "initiator_mutual": "Mutual"
             },
             "relationship_timeline": {
                 "header": "Relationship Timeline",
