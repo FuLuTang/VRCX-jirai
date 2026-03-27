@@ -1,0 +1,348 @@
+---
+title: VRCX Database ERD
+---
+erDiagram
+
+    %% ════════════════════════════════════════════
+    %% USER-SPECIFIC TABLES  (pri) = {prefix}_xxx
+    %% ════════════════════════════════════════════
+
+    pri_friend_log_current {
+        text user_id PK
+        text display_name
+        text trust_level
+        int  friend_number
+    }
+
+    pri_friend_log_history {
+        int  id PK
+        text created_at
+        text type
+        text user_id
+        text display_name
+        text previous_display_name
+        text trust_level
+        text previous_trust_level
+        int  friend_number
+    }
+
+    pri_feed_gps {
+        int  id PK
+        text created_at
+        text user_id
+        text display_name
+        text location
+        text world_name
+        text previous_location
+        int  time
+        text group_name
+    }
+
+    pri_feed_status {
+        int  id PK
+        text created_at
+        text user_id
+        text display_name
+        text status
+        text status_description
+        text previous_status
+        text previous_status_description
+    }
+
+    pri_feed_bio {
+        int  id PK
+        text created_at
+        text user_id
+        text display_name
+        text bio
+        text previous_bio
+    }
+
+    pri_feed_avatar {
+        int  id PK
+        text created_at
+        text user_id
+        text display_name
+        text owner_id
+        text avatar_name
+        text current_avatar_image_url
+        text current_avatar_thumbnail_image_url
+    }
+
+    pri_feed_online_offline {
+        int  id PK
+        text created_at
+        text user_id
+        text display_name
+        text type
+        text location
+        text world_name
+        int  time
+        text group_name
+    }
+
+    pri_activity_sync_state_v2 {
+        text user_id PK
+        text updated_at
+        int  is_self
+        text source_last_created_at
+        int  pending_session_start_at
+        int  cached_range_days
+    }
+
+    pri_activity_sessions_v2 {
+        int  session_id PK
+        text user_id
+        int  start_at
+        int  end_at
+        int  is_open_tail
+        text source_revision
+    }
+
+    pri_activity_bucket_cache_v2 {
+        text user_id PK
+        text target_user_id PK
+        int  range_days PK
+        text view_kind PK
+        text exclude_key PK
+        text raw_buckets_json
+        text normalized_buckets_json
+        text summary_json
+        text built_at
+    }
+
+    pri_notifications {
+        text id PK
+        text created_at
+        text type
+        text sender_user_id
+        text sender_username
+        text receiver_user_id
+        text message
+        text world_id
+        text world_name
+        int  expired
+    }
+
+    pri_notifications_v2 {
+        text id PK
+        text created_at
+        text updated_at
+        text expires_at
+        text type
+        text message
+        text title
+        int  seen
+        text sender_user_id
+        text sender_username
+        text data
+    }
+
+    pri_moderation {
+        text user_id PK
+        text updated_at
+        text display_name
+        int  block
+        int  mute
+    }
+
+    pri_avatar_history {
+        text avatar_id PK
+        text created_at
+        int  time
+    }
+
+    pri_notes {
+        text user_id PK
+        text display_name
+        text note
+        text created_at
+    }
+
+    pri_mutual_graph_friends {
+        text friend_id PK
+    }
+
+    pri_mutual_graph_links {
+        text friend_id PK
+        text mutual_id PK
+    }
+
+    pri_mutual_graph_friends_old {
+        text friend_id PK
+        text last_updated
+    }
+
+    pri_mutual_graph_links_old {
+        text friend_id PK
+        text mutual_id PK
+        text date
+    }
+
+    %% ════════════════════════════════════════════
+    %% GLOBAL SHARED TABLES  (pub) = no prefix
+    %% ════════════════════════════════════════════
+
+    pub_gamelog_location {
+        int  id PK
+        text created_at
+        text location
+        text world_id
+        text world_name
+        int  time
+        text group_name
+    }
+
+    pub_gamelog_join_leave {
+        int  id PK
+        text created_at
+        text type
+        text display_name
+        text location
+        text user_id
+        int  time
+    }
+
+    pub_gamelog_portal_spawn {
+        int  id PK
+        text created_at
+        text display_name
+        text location
+        text user_id
+        text instance_id
+        text world_name
+    }
+
+    pub_gamelog_video_play {
+        int  id PK
+        text created_at
+        text video_url
+        text video_name
+        text location
+        text display_name
+        text user_id
+    }
+
+    pub_gamelog_resource_load {
+        int  id PK
+        text created_at
+        text resource_url
+        text resource_type
+        text location
+    }
+
+    pub_gamelog_event {
+        int  id PK
+        text created_at
+        text data
+    }
+
+    pub_gamelog_external {
+        int  id PK
+        text created_at
+        text message
+        text display_name
+        text user_id
+        text location
+    }
+
+    pub_cache_avatar {
+        text id PK
+        text added_at
+        text author_id
+        text name
+        text release_status
+        text thumbnail_image_url
+        int  version
+    }
+
+    pub_cache_world {
+        text id PK
+        text added_at
+        text author_id
+        text name
+        text release_status
+        text thumbnail_image_url
+        int  version
+    }
+
+    pub_favorite_world {
+        int  id PK
+        text created_at
+        text world_id
+        text group_name
+    }
+
+    pub_favorite_avatar {
+        int  id PK
+        text created_at
+        text avatar_id
+        text group_name
+    }
+
+    pub_favorite_friend {
+        int  id PK
+        text created_at
+        text user_id
+        text group_name
+    }
+
+    pub_memos {
+        text user_id PK
+        text edited_at
+        text memo
+    }
+
+    pub_world_memos {
+        text world_id PK
+        text edited_at
+        text memo
+    }
+
+    pub_avatar_memos {
+        text avatar_id PK
+        text edited_at
+        text memo
+    }
+
+    pub_avatar_tags {
+        text avatar_id PK
+        text tag PK
+        text color
+    }
+
+    %% ════════════════════════════════════════════
+    %% RELATIONSHIPS
+    %% ════════════════════════════════════════════
+
+    %% Friend log
+    pri_friend_log_current ||--o{ pri_friend_log_history : "user_id"
+    pri_friend_log_current ||--o{ pri_feed_gps : "user_id"
+    pri_friend_log_current ||--o{ pri_feed_status : "user_id"
+    pri_friend_log_current ||--o{ pri_feed_bio : "user_id"
+    pri_friend_log_current ||--o{ pri_feed_avatar : "user_id"
+    pri_friend_log_current ||--o{ pri_feed_online_offline : "user_id"
+    pri_friend_log_current ||--o{ pri_moderation : "user_id"
+    pri_friend_log_current ||--o{ pri_notes : "user_id"
+    pri_friend_log_current ||--o{ pri_activity_sync_state_v2 : "user_id"
+    pri_friend_log_current ||--o{ pri_activity_sessions_v2 : "user_id"
+    pri_friend_log_current ||--o{ pri_notifications : "sender_user_id"
+    pri_friend_log_current ||--o{ pri_notifications : "receiver_user_id"
+
+    %% Mutual graph
+    pri_mutual_graph_friends ||--o{ pri_mutual_graph_links : "friend_id"
+    pri_mutual_graph_friends ||--o{ pri_mutual_graph_links : "mutual_id"
+    pri_mutual_graph_friends_old ||--o{ pri_mutual_graph_links_old : "friend_id"
+    pri_mutual_graph_friends_old ||--o{ pri_mutual_graph_links_old : "mutual_id"
+
+    %% Game log
+    pub_gamelog_location ||--o{ pub_gamelog_join_leave : "location"
+
+    %% Cache → favorites
+    pub_cache_world ||--o{ pub_favorite_world : "world_id"
+    pub_cache_world ||--o{ pub_world_memos : "world_id"
+    pub_cache_world ||--o{ pub_gamelog_location : "world_id"
+    pub_cache_avatar ||--o{ pub_favorite_avatar : "avatar_id"
+    pub_cache_avatar ||--o{ pub_avatar_memos : "avatar_id"
+    pub_cache_avatar ||--o{ pub_avatar_tags : "avatar_id"
+    pub_cache_avatar ||--o{ pri_avatar_history : "avatar_id"
