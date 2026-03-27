@@ -147,6 +147,12 @@ const database = {
         await sqliteService.executeNonQuery(
             `CREATE TABLE IF NOT EXISTS ${dbVars.userPrefix}_mutual_graph_links (friend_id TEXT NOT NULL, mutual_id TEXT NOT NULL, PRIMARY KEY(friend_id, mutual_id))`
         );
+        await sqliteService.executeNonQuery(
+            `CREATE TABLE IF NOT EXISTS ${dbVars.userPrefix}_mutual_graph_links_old (friend_id TEXT NOT NULL, mutual_id TEXT NOT NULL, date TEXT NOT NULL, PRIMARY KEY(friend_id, mutual_id))`
+        );
+        await sqliteService.executeNonQuery(
+            `CREATE TABLE IF NOT EXISTS ${dbVars.userPrefix}_mutual_graph_friends_old (friend_id TEXT PRIMARY KEY, last_updated TEXT NOT NULL)`
+        );
     },
 
     async initTables() {

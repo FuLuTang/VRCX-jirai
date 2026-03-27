@@ -284,6 +284,9 @@ export const useChartsStore = defineStore('Charts', () => {
                     entries.set(normalizedFriendId, ids);
                 });
                 await database.saveMutualGraphSnapshot(entries);
+                await database.mergeMutualLinksToOld(entries);
+                const fetchedFriendIds = Array.from(entries.keys());
+                await database.bulkUpdateFriendFetchTimesInOld(fetchedFriendIds);
             } catch (persistErr) {
                 console.error(
                     '[MutualNetworkGraph] Failed to cache data',

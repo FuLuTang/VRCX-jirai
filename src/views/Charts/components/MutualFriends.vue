@@ -1065,7 +1065,7 @@
         // loadingToastId.value = toast.info(t('view.charts.mutual_friend.status.loading_cache'));
 
         try {
-            const snapshot = await database.getMutualGraphSnapshot();
+            const snapshot = await database.getMutualGraphSnapshotFromOld();
             if (!snapshot || snapshot.size === 0) {
                 if (totalFriends.value === 0) {
                     showStatusMessage(t('view.charts.mutual_friend.status.no_friends_to_process'), 'info');
