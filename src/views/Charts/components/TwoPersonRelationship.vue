@@ -3,112 +3,116 @@
         <div ref="twoPersonRef" class="pt-4">
             <BackToTop :target="twoPersonRef" :right="30" :bottom="30" :teleport="false" />
 
-            <div class="options-container mt-0 flex flex-wrap items-center gap-2">
+            <div class="options-container mt-0 flex flex-wrap items-center gap-x-3 gap-y-2">
                 <span class="shrink-0">{{ t('view.charts.two_person_relationship.header') }}</span>
 
-                <div class="flex flex-nowrap items-center gap-2">
-                    <VirtualCombobox
-                        class="w-56"
-                        :model-value="selectedFriendAId"
-                        @update:modelValue="handleFriendASelect"
-                        :groups="friendPickerGroupsA"
-                        :placeholder="t('view.charts.two_person_relationship.select_friend_a')"
-                        :search-placeholder="t('view.charts.two_person_relationship.search_friend')"
-                        :close-on-select="true"
-                        :deselect-on-reselect="true">
-                        <template #item="{ item, selected }">
-                            <div class="flex w-full items-center p-1.5 in-[.is-compact-table]:p-1! text-[13px] in-[.is-compact-table]:text-[12px]!">
-                                <template v-if="item.user">
-                                    <div
-                                        class="relative mr-2.5 in-[.is-compact-table]:mr-1.5! inline-block size-9 in-[.is-compact-table]:size-7! in-[.is-comfortable-table]:size-8! flex-none"
-                                        :class="userStatusClass(item.user)">
-                                        <img
-                                            class="size-full rounded-full object-cover"
-                                            :src="userImage(item.user)"
-                                            loading="lazy" />
-                                    </div>
-                                    <div class="flex-1 overflow-hidden">
-                                        <span
-                                            class="block truncate font-medium leading-[18px]"
-                                            :style="{ color: item.user.$userColour }">
-                                            {{ item.user.displayName }}
-                                        </span>
-                                    </div>
-                                </template>
-                                <template v-else>
-                                    <span>{{ item.label }}</span>
-                                </template>
-                                <CheckIcon
-                                    :class="['ml-auto size-4', selected ? 'opacity-100' : 'opacity-0']" />
-                            </div>
-                        </template>
-                    </VirtualCombobox>
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex items-center gap-2">
+                        <VirtualCombobox
+                            class="w-[11.2rem]"
+                            :model-value="selectedFriendAId"
+                            @update:modelValue="handleFriendASelect"
+                            :groups="friendPickerGroupsA"
+                            :placeholder="t('view.charts.two_person_relationship.select_friend_a')"
+                            :search-placeholder="t('view.charts.two_person_relationship.search_friend')"
+                            :close-on-select="true"
+                            :deselect-on-reselect="true">
+                            <template #item="{ item, selected }">
+                                <div class="flex w-full items-center p-1.5 in-[.is-compact-table]:p-1! text-[13px] in-[.is-compact-table]:text-[12px]!">
+                                    <template v-if="item.user">
+                                        <div
+                                            class="relative mr-2.5 in-[.is-compact-table]:mr-1.5! inline-block size-9 in-[.is-compact-table]:size-7! in-[.is-comfortable-table]:size-8! flex-none"
+                                            :class="userStatusClass(item.user)">
+                                            <img
+                                                class="size-full rounded-full object-cover"
+                                                :src="userImage(item.user)"
+                                                loading="lazy" />
+                                        </div>
+                                        <div class="flex-1 overflow-hidden">
+                                            <span
+                                                class="block truncate font-medium leading-[18px]"
+                                                :style="{ color: item.user.$userColour }">
+                                                {{ item.user.displayName }}
+                                            </span>
+                                        </div>
+                                    </template>
+                                    <template v-else>
+                                        <span>{{ item.label }}</span>
+                                    </template>
+                                    <CheckIcon
+                                        :class="['ml-auto size-4', selected ? 'opacity-100' : 'opacity-0']" />
+                                </div>
+                            </template>
+                        </VirtualCombobox>
 
-                    <TooltipWrapper :content="t('view.charts.two_person_relationship.swap_friends')" side="top">
-                        <Button
-                            class="rounded-full"
-                            size="icon"
-                            variant="ghost"
-                            :disabled="!selectedFriendAId && !selectedFriendBId"
-                            @click="swapFriends">
-                            <ArrowLeftRight class="size-4" />
-                        </Button>
-                    </TooltipWrapper>
+                        <TooltipWrapper :content="t('view.charts.two_person_relationship.swap_friends')" side="top">
+                            <Button
+                                class="rounded-full"
+                                size="icon"
+                                variant="ghost"
+                                :disabled="!selectedFriendAId && !selectedFriendBId"
+                                @click="swapFriends">
+                                <ArrowLeftRight class="size-4" />
+                            </Button>
+                        </TooltipWrapper>
 
-                    <VirtualCombobox
-                        class="w-56"
-                        :model-value="selectedFriendBId"
-                        @update:modelValue="handleFriendBSelect"
-                        :groups="friendPickerGroupsB"
-                        :placeholder="t('view.charts.two_person_relationship.select_friend_b')"
-                        :search-placeholder="t('view.charts.two_person_relationship.search_friend')"
-                        :close-on-select="true"
-                        :deselect-on-reselect="true">
-                        <template #item="{ item, selected }">
-                            <div class="flex w-full items-center p-1.5 in-[.is-compact-table]:p-1! text-[13px] in-[.is-compact-table]:text-[12px]!">
-                                <template v-if="item.user">
-                                    <div
-                                        class="relative mr-2.5 in-[.is-compact-table]:mr-1.5! inline-block size-9 in-[.is-compact-table]:size-7! in-[.is-comfortable-table]:size-8! flex-none"
-                                        :class="userStatusClass(item.user)">
-                                        <img
-                                            class="size-full rounded-full object-cover"
-                                            :src="userImage(item.user)"
-                                            loading="lazy" />
-                                    </div>
-                                    <div class="flex-1 overflow-hidden">
-                                        <span
-                                            class="block truncate font-medium leading-[18px]"
-                                            :style="{ color: item.user.$userColour }">
-                                            {{ item.user.displayName }}
-                                        </span>
-                                    </div>
-                                </template>
-                                <template v-else>
-                                    <span>{{ item.label }}</span>
-                                </template>
-                                <CheckIcon
-                                    :class="['ml-auto size-4', selected ? 'opacity-100' : 'opacity-0']" />
-                            </div>
-                        </template>
-                    </VirtualCombobox>
-                </div>
+                        <VirtualCombobox
+                            class="w-[11.2rem]"
+                            :model-value="selectedFriendBId"
+                            @update:modelValue="handleFriendBSelect"
+                            :groups="friendPickerGroupsB"
+                            :placeholder="t('view.charts.two_person_relationship.select_friend_b')"
+                            :search-placeholder="t('view.charts.two_person_relationship.search_friend')"
+                            :close-on-select="true"
+                            :deselect-on-reselect="true">
+                            <template #item="{ item, selected }">
+                                <div class="flex w-full items-center p-1.5 in-[.is-compact-table]:p-1! text-[13px] in-[.is-compact-table]:text-[12px]!">
+                                    <template v-if="item.user">
+                                        <div
+                                            class="relative mr-2.5 in-[.is-compact-table]:mr-1.5! inline-block size-9 in-[.is-compact-table]:size-7! in-[.is-comfortable-table]:size-8! flex-none"
+                                            :class="userStatusClass(item.user)">
+                                            <img
+                                                class="size-full rounded-full object-cover"
+                                                :src="userImage(item.user)"
+                                                loading="lazy" />
+                                        </div>
+                                        <div class="flex-1 overflow-hidden">
+                                            <span
+                                                class="block truncate font-medium leading-[18px]"
+                                                :style="{ color: item.user.$userColour }">
+                                                {{ item.user.displayName }}
+                                            </span>
+                                        </div>
+                                    </template>
+                                    <template v-else>
+                                        <span>{{ item.label }}</span>
+                                    </template>
+                                    <CheckIcon
+                                        :class="['ml-auto size-4', selected ? 'opacity-100' : 'opacity-0']" />
+                                </div>
+                            </template>
+                        </VirtualCombobox>
+                    </div>
 
-                <TooltipWrapper :content="t('view.charts.instance_activity.refresh')" side="top">
-                    <Button
-                        class="rounded-full"
-                        size="icon"
-                        variant="ghost"
-                        :disabled="!selectedFriendAId || !selectedFriendBId || isLoading"
-                        @click="loadData">
-                        <RefreshCcw />
-                    </Button>
-                </TooltipWrapper>
+                    <div class="flex items-center gap-2">
+                        <TooltipWrapper :content="t('view.charts.instance_activity.refresh')" side="top">
+                            <Button
+                                class="rounded-full"
+                                size="icon"
+                                variant="ghost"
+                                :disabled="!selectedFriendAId || !selectedFriendBId || isLoading"
+                                @click="loadData">
+                                <RefreshCcw />
+                            </Button>
+                        </TooltipWrapper>
 
-                <div class="flex items-center justify-between px-0.5 h-[30px] gap-2">
-                    <span class="shrink-0 text-sm">
-                        {{ t('view.charts.two_person_relationship.show_self_presence') }}
-                    </span>
-                    <Switch v-model="showSelfPresence" />
+                        <div class="flex items-center gap-2 px-0.5">
+                            <span class="shrink-0 text-sm">
+                                {{ t('view.charts.two_person_relationship.show_self_presence') }}
+                            </span>
+                            <Switch v-model="showSelfPresence" />
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -149,14 +153,10 @@
 
                 <div class="mx-auto mt-3 in-[.is-compact-table]:mt-1.5! in-[.is-comfortable-table]:mt-2! max-w-[900px]">
                     <button
-                        v-for="(item, index) in sharedInstances"
+                        v-for="item in sharedInstances"
                         :key="item.location + '_' + item.friendALeave"
                         type="button"
                         class="group flex w-full items-center gap-3 rounded-lg px-3 py-2 in-[.is-compact-table]:py-1! in-[.is-comfortable-table]:py-1.5! text-left transition-colors hover:bg-accent">
-                        <span class="w-6 shrink-0 text-right font-mono text-sm font-bold text-muted-foreground">
-                            #{{ index + 1 }}
-                        </span>
-
                         <div class="w-32 shrink-0 text-xs text-muted-foreground tabular-nums">
                             {{ item.formattedDate }}
                         </div>
@@ -185,6 +185,11 @@
                             </div>
                         </div>
 
+                        <div class="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                            <Clock class="size-3 shrink-0" />
+                            <span class="font-medium tabular-nums">{{ timeToText(item.coexistenceTime, true) }}</span>
+                        </div>
+
                         <span
                             v-if="showSelfPresence"
                             :class="[
@@ -199,11 +204,6 @@
                                     : t('view.charts.two_person_relationship.self_not_present')
                             }}
                         </span>
-
-                        <div class="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-                            <Clock class="size-3 shrink-0" />
-                            <span class="font-medium tabular-nums">{{ timeToText(item.coexistenceTime, true) }}</span>
-                        </div>
                     </button>
                 </div>
             </template>
