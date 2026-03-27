@@ -238,6 +238,60 @@ const mutualGraph = {
                 `INSERT OR REPLACE INTO ${oldTable} (friend_id, mutual_id, date) VALUES ${edgeValues}`
             );
         }
+    },
+
+    async updateFriendFetchTimeInOld(friendId) {
+        if (!dbVars.userPrefix || !friendId) {
+            return;
+        }
+        const friendsOldTable = `${dbVars.userPrefix}_mutual_graph_friends_old`;
+        const safeFriendId = friendId.replace(/'/g, "''");
+        const now = new Date().toISOString();
+        await sqliteService.executeNonQuery(
+            `INSERT OR REPLACE INTO ${friendsOldTable} (friend_id, last_updated) VALUES ('${safeFriendId}', '${now}')`
+        );
+    },
+
+    async bulkUpdateFriendFetchTimesInOld(friendIds) {
+        if (!dbVars.userPrefix || !friendIds || friendIds.length === 0) {
+            return;
+        }
+        const friendsOldTable = `${dbVars.userPrefix}_mutual_graph_friends_old`;
+        const now = new Date().toISOString();
+        const parts = [];
+        for (const friendId of friendIds) {
+            if (!friendId) {
+                continue;
+            }
+            const safeFriendId = String(friendId).replace(/'/g, "''");
+            parts.push(`('${safeFriendId}', '${now}')`);
+        }
+        if (parts.length === 0) {
+            return;
+        }
+        await sqliteService.executeNonQuery('BEGIN');
+        try {
+            await sqliteService.executeNonQuery(
+                `INSERT OR REPLACE INTO ${friendsOldTable} (friend_id, last_updated) VALUES ${parts.join(',')}`
+            );
+            await sqliteService.executeNonQuery('COMMIT');
+        } catch (err) {
+            await sqliteService.executeNonQuery('ROLLBACK');
+            throw err;
+        }
+    },
+
+    async getFriendLastFetchedFromOld(friendId) {
+        if (!dbVars.userPrefix || !friendId) {
+            return null;
+        }
+        const friendsOldTable = `${dbVars.userPrefix}_mutual_graph_friends_old`;
+        const safeFriendId = friendId.replace(/'/g, "''");
+        let result = null;
+        await sqliteService.execute((dbRow) => {
+            result = dbRow[0] || null;
+        }, `SELECT last_updated FROM ${friendsOldTable} WHERE friend_id='${safeFriendId}'`);
+        return result;
     }
 };
 

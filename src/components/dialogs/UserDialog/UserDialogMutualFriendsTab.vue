@@ -57,7 +57,8 @@
                     v-text="user.displayName"></span>
                 <span
                     v-if="mutualDateMap.get(user.id)"
-                    class="block truncate text-[11px] text-muted-foreground leading-[15px]">
+                    class="block truncate text-[11px] leading-[15px] rounded px-1"
+                    :class="isLinkStale(mutualDateMap.get(user.id)) ? 'bg-gray-400/30 text-gray-500' : 'bg-green-500/20 text-green-700 dark:text-green-400'">
                     {{ formatDateFilter(mutualDateMap.get(user.id), 'date') }}
                 </span>
             </div>
@@ -102,6 +103,7 @@
 
     const searchQuery = ref('');
     const mutualDateMap = ref(new Map());
+    const friendLastUpdated = ref(null);
 
     const filteredMutualFriends = computed(() => {
         const friends = userDialog.value.mutualFriends;
@@ -110,6 +112,25 @@
         return friends.filter((u) => (u.displayName || '').toLowerCase().includes(query));
     });
     watch(() => userDialog.value.id, () => { searchQuery.value = ''; });
+
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+    /**
+     * Returns true if the link date is stale (more than 1 day before the friend's last_updated).
+     * @param {string} linkDate
+     * @returns {boolean}
+     */
+    function isLinkStale(linkDate) {
+        if (!linkDate || !friendLastUpdated.value) {
+            return false;
+        }
+        const lastUpdatedMs = new Date(friendLastUpdated.value).getTime();
+        const linkDateMs = new Date(linkDate).getTime();
+        if (isNaN(lastUpdatedMs) || isNaN(linkDateMs)) {
+            return false;
+        }
+        return (lastUpdatedMs - linkDateMs) > ONE_DAY_MS;
+    }
 
     /**
      *
@@ -139,9 +160,14 @@
         if (currentUser.value.hasSharedConnectionsOptOut) {
             userDialog.value.mutualFriends = [];
             mutualDateMap.value = new Map();
+            friendLastUpdated.value = null;
             return;
         }
-        const entries = await database.getMutualsForFriendWithDateFromOld(userId) || [];
+        const [entries, lastFetched] = await Promise.all([
+            database.getMutualsForFriendWithDateFromOld(userId) || [],
+            database.getFriendLastFetchedFromOld(userId)
+        ]);
+        friendLastUpdated.value = lastFetched;
         const newDateMap = new Map();
         const friends = [];
         for (const entry of entries) {
@@ -188,6 +214,7 @@
                     if (success) {
                         await database.updateMutualsForFriend(userId, collectedIds);
                         await database.updateMutualsForFriendInOld(userId, collectedIds);
+                        await database.updateFriendFetchTimeInOld(userId);
                     }
                     await getUserMutualFriends(userId);
                 } catch (err) {
