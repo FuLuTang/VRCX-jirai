@@ -6,6 +6,9 @@
 
 ### **专为地雷人打造的视奸神器**
 
+| **English** | [Français](./README/README.fr.md) | [日本語](./README/README.jp.md) | [简体中文](./README/README.zh_CN.md) | [Italiano](./README/README.it.md) | [Русский](./README/README.ru_RU.md) | [Español](./README/README.es.md) | [Polski](./README/README.pl.md) | [ภาษาไทย](./README/README.th.md) | [Magyar](./README/README.hu.md)
+
+
 </div>
 
 这是 [VRCX](https://github.com/vrcx-team/VRCX) 的魔改分支。原版 VRCX 已经很好用了，但要想成为一名合格的 **地雷男/女**，光知道朋友在不在线怎么够？
@@ -39,6 +42,7 @@
     - 从你的好友列表中任选两人，一键查询他们**共同在一个房间待过的所有记录**。
     - **极限细节**：不仅仅是共存时间，还能看到当时“房主是谁”、“最高达到过多少人数”，并且会标记**“你当时在不在场”**。
     - 换句话说：你想知道 A 和 B 到底有多熟吗？数据会告诉你答案。
+
 
 - :detective: **像查代码一样查签名记录 (Bio Diff View)** （新！）
     - 去掉了原版干巴巴的简介历史，新增了一个类似 `Git Diff` 的界面。
