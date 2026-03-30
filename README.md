@@ -14,7 +14,8 @@
 
 于是就有了这个版本。
 
-- 可以从 [Releases](https://github.com/FuLuTang/VRCX-jirai/releases/latest) 页面下载最新安装包（`VRCX_Setup.exe`）直接安装。
+- Windows 可以从 [Releases](https://github.com/FuLuTang/VRCX-jirai/releases/latest) 页面下载最新安装包（`VRCX-Jirai_XXXX.X.XX_Setup.exe`）直接安装。
+- MacOS 和 Linux，你懂的。
 - 如果想下载测试最新的构建版本，请点击 [GitHub Actions](https://github.com/FuLuTang/VRCX-jirai/actions/workflows/github_actions.yml)。
 - 如需从源码构建，请参考下方"从源码构建"说明。
 
