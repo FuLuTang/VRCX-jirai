@@ -205,8 +205,13 @@
                                 'shrink-0 rounded px-1.5 py-0.5 text-xs font-medium',
                                 item.initiator === 'mutual'
                                     ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
-                                    : 'bg-orange-500/15 text-orange-600 dark:text-orange-400'
-                            ]">
+                                    : 'text-orange-600 dark:text-orange-400'
+                            ]"
+                            :style="item.initiator !== 'mutual' ? {
+                                background: item.initiator === 'leftPlayer'
+                                    ? 'linear-gradient(to right, rgb(249 115 22 / 0.25), rgb(249 115 22 / 0.05))'
+                                    : 'linear-gradient(to left, rgb(249 115 22 / 0.25), rgb(249 115 22 / 0.05))'
+                            } : undefined">
                             {{ t('view.charts.two_person_relationship.initiator_' + item.initiator) }}
                         </span>
                     </button>
