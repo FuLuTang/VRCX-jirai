@@ -208,6 +208,42 @@ export const useQuickSearchStore = defineStore('QuickSearch', () => {
             favoriteWorldResults.value = payload.favWorlds;
             ownGroupResults.value = payload.ownGroups;
             joinedGroupResults.value = payload.joinedGroups;
+
+            // Supplement with DB bio search (async, merges when ready)
+            if (query.value) {
+                supplementWithBioSearch(query.value, payload.seq);
+            }
+        }
+    }
+
+    async function supplementWithBioSearch(q, seq) {
+        try {
+            const bioResults = await database.searchBiosByContent(q);
+            if (seq !== searchSeq) return; // query changed, discard
+
+            const existingIds = new Set(friendResults.value.map((r) => r.id));
+            const additions = [];
+            for (const bio of bioResults) {
+                if (existingIds.has(bio.userId)) continue;
+                const friendCtx = friendStore.friends.get(bio.userId);
+                if (!friendCtx) continue;
+                additions.push({
+                    id: bio.userId,
+                    name: friendCtx.name || bio.displayName,
+                    type: 'friend',
+                    imageUrl: friendCtx.ref?.currentAvatarThumbnailImageUrl || '',
+                    memo: friendCtx.memo || '',
+                    note: friendCtx.ref?.note || '',
+                    bio: bio.bio || '',
+                    matchedField: 'bio',
+                    ref: friendCtx.ref
+                });
+            }
+            if (additions.length > 0 && seq === searchSeq) {
+                friendResults.value = [...friendResults.value, ...additions];
+            }
+        } catch (e) {
+            console.warn('[QuickSearch] Bio DB search failed:', e);
         }
     }
 

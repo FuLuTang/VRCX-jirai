@@ -65,6 +65,29 @@ const feed = {
         return result;
     },
 
+    async searchBiosByContent(query, limit = 10) {
+        const results = [];
+        const searchLike = `%${query}%`;
+        await sqliteService.execute(
+            (row) => {
+                results.push({
+                    userId: row[0],
+                    displayName: row[1],
+                    bio: row[2]
+                });
+            },
+            `SELECT fb.user_id, fb.display_name, fb.bio FROM ${dbVars.userPrefix}_feed_bio fb
+             WHERE fb.id IN (SELECT MAX(id) FROM ${dbVars.userPrefix}_feed_bio GROUP BY user_id)
+             AND fb.bio LIKE @searchLike
+             LIMIT @limit`,
+            {
+                '@searchLike': searchLike,
+                '@limit': limit
+            }
+        );
+        return results;
+    },
+
     async getLastStatusChangeForUser(userId) {
         let result = null;
         await sqliteService.execute(

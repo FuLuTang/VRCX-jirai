@@ -184,6 +184,10 @@ function searchFriends(query, cleanQuery, comparer, limit = 10) {
             match = localeIncludes(ctx.note, query, comparer);
             if (match) matchedField = 'note';
         }
+        if (!match && ctx.bio) {
+            match = localeIncludes(ctx.bio, query, comparer);
+            if (match) matchedField = 'bio';
+        }
         if (match) {
             results.push({
                 id: ctx.id,
@@ -192,6 +196,7 @@ function searchFriends(query, cleanQuery, comparer, limit = 10) {
                 imageUrl: ctx.imageUrl,
                 memo: ctx.memo || '',
                 note: ctx.note || '',
+                bio: ctx.bio || '',
                 matchedField
             });
         }
@@ -212,6 +217,7 @@ function searchFriends(query, cleanQuery, comparer, limit = 10) {
     }
     return results;
 }
+
 
 function searchItems(
     cleanQuery,

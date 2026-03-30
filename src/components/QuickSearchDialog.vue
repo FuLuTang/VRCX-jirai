@@ -112,7 +112,7 @@
                             <CommandItem
                                 v-for="item in friendResults"
                                 :key="item.id"
-                                :value="[item.name, item.memo, item.note, item.id].filter(Boolean).join(' ')"
+                                :value="[item.name, item.memo, item.note, item.bio, item.id].filter(Boolean).join(' ')"
                                 class="gap-3"
                                 @select="handleSelect(item)">
                                 <img
@@ -134,6 +134,11 @@
                                         v-if="item.matchedField !== 'name' && item.note"
                                         class="truncate text-xs text-muted-foreground">
                                         Note: {{ item.note }}
+                                    </span>
+                                    <span
+                                        v-if="item.matchedField === 'bio' && item.bio"
+                                        class="truncate text-xs text-muted-foreground">
+                                        Bio: {{ item.bio }}
                                     </span>
                                 </div>
                             </CommandItem>
