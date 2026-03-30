@@ -13,6 +13,7 @@ export const useAutoFollowStore = defineStore('AutoFollow', () => {
     const isActive = ref(false);
     const targetFriendId = ref(null);
     const targetFriendName = ref('');
+    const dialogVisible = ref(false);
     const { t } = useI18n();
 
     let unwatchFriend = null;
@@ -67,11 +68,17 @@ export const useAutoFollowStore = defineStore('AutoFollow', () => {
         }
     }
 
+    function openDialog() {
+        dialogVisible.value = true;
+    }
+
     return {
         isActive,
         targetFriendId,
         targetFriendName,
+        dialogVisible,
         startFollow,
-        stopFollow
+        stopFollow,
+        openDialog
     };
 });

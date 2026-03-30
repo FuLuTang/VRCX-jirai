@@ -406,7 +406,7 @@ const gameLog = {
         return joinTime;
     },
 
-    async getRecentlyMetUsers(currentUserId, limit = 20) {
+    async getRecentlyMetUsers(currentUserId, limit = 8) {
         const results = [];
         await sqliteService.execute(
             (row) => {
@@ -418,7 +418,7 @@ const gameLog = {
             },
             `SELECT display_name, user_id, MAX(created_at) AS last_seen
              FROM gamelog_join_leave
-             WHERE type = 'OnPlayerJoined'
+             WHERE (type = 'OnPlayerJoined' OR type = 'OnPlayerLeft')
                AND user_id != @currentUserId
                AND user_id IS NOT NULL
                AND user_id != ''

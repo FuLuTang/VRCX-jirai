@@ -83,6 +83,8 @@
 
         <SendBoopDialog></SendBoopDialog>
 
+        <AutoFollowDialog></AutoFollowDialog>
+
         <GlobalToolsDialogs></GlobalToolsDialogs>
 
         <ChangelogDialog></ChangelogDialog>
@@ -118,6 +120,7 @@
     import NavMenu from '../../components/nav-menu/NavMenu.vue';
     import PrimaryPasswordDialog from '../Settings/dialogs/PrimaryPasswordDialog.vue';
     import SendBoopDialog from '../../components/dialogs/SendBoopDialog.vue';
+    import AutoFollowDialog from '../../components/dialogs/AutoFollowDialog.vue';
     import Sidebar from '../Sidebar/Sidebar.vue';
     import StatusBar from '../../components/StatusBar.vue';
     import VRChatConfigDialog from '../Settings/dialogs/VRChatConfigDialog.vue';

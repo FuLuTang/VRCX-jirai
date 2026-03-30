@@ -148,12 +148,12 @@
     overflow: hidden;
 
     /* Frosted-glass background */
-    backdrop-filter: blur(14px) saturate(170%);
-    -webkit-backdrop-filter: blur(14px) saturate(170%);
+    backdrop-filter: blur(8px) saturate(130%);
+    -webkit-backdrop-filter: blur(8px) saturate(130%);
 
-    /* Default blue tint */
-    background: rgba(59, 130, 246, 0.30);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    /* Default subtle blue tint */
+    background: rgba(59, 130, 246, 0.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
 
     /* Transition only GPU-composited properties */
     transition:
@@ -164,25 +164,25 @@
 
 /* Orange tint when active */
 .lg-wrap--active .lg-glass {
-    background: rgba(249, 115, 22, 0.35);
-    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.25);
+    background: rgba(249, 115, 22, 0.20);
+    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.15);
 }
 
-/* Hover — lift + brighter tint */
+/* Hover — lift + slightly brighter tint */
 .lg-wrap:hover .lg-glass {
-    background: rgba(59, 130, 246, 0.46);
+    background: rgba(59, 130, 246, 0.28);
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
 }
 .lg-wrap--active:hover .lg-glass {
-    background: rgba(249, 115, 22, 0.52);
-    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.30);
+    background: rgba(249, 115, 22, 0.32);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.20);
 }
 
 /* Press — scale in */
 .lg-wrap:active .lg-glass {
     transform: scale(0.96);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.10);
 }
 
 /* ── Border rim (ported from liquid-glass-react) ───────────────── */
@@ -217,8 +217,8 @@
     );
 }
 
-.lg-rim--screen  { mix-blend-mode: screen;  opacity: 0.28; }
-.lg-rim--overlay { mix-blend-mode: overlay; }
+.lg-rim--screen  { mix-blend-mode: screen;  opacity: 0.18; }
+.lg-rim--overlay { mix-blend-mode: overlay; opacity: 0.7; }
 
 /* ── Hover / press radial glow ─────────────────────────────────── */
 .lg-glow {
@@ -235,8 +235,8 @@
     opacity: 0;
     transition: opacity 0.15s ease;
 }
-.lg-glow--hover { opacity: 0.50; }
-.lg-glow--press { opacity: 0.90; }
+.lg-glow--hover { opacity: 0.30; }
+.lg-glow--press { opacity: 0.60; }
 
 /* ── Content span ──────────────────────────────────────────────── */
 .lg-inner {
@@ -245,10 +245,10 @@
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    color: #fff;
+    color: rgba(255, 255, 255, 0.90);
     font-size: 0.8125rem;
-    font-weight: 600;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.30);
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.20);
     user-select: none;
 }
 

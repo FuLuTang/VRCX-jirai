@@ -71,7 +71,7 @@ export const useQuickSearchStore = defineStore('QuickSearch', () => {
         const userId = currentUserId.value;
         if (!userId) return;
         const [users, locations] = await Promise.all([
-            database.getRecentlyMetUsers(userId, 20).catch(() => []),
+            database.getRecentlyMetUsers(userId, 8).catch(() => []),
             database.getRecentlyJoinedLocations(10).catch(() => [])
         ]);
         // Exclude friends from recently-met list
@@ -79,16 +79,15 @@ export const useQuickSearchStore = defineStore('QuickSearch', () => {
             (u) => !friendStore.friends.has(u.userId)
         );
         recentlyJoinedLocations.value = locations;
-        // Re-filter if there's already an active query
-        if (query.value) {
-            filterRecentByQuery(query.value);
-        }
+        // Always filter/populate results (shows all items when query is empty)
+        filterRecentByQuery(query.value);
     }
 
     function filterRecentByQuery(q) {
         if (!q) {
-            recentlyMetResults.value = [];
-            recentBeenResults.value = [];
+            // Show all loaded recent items in the empty-query (initial) state
+            recentlyMetResults.value = recentlyMetUsers.value;
+            recentBeenResults.value = recentlyJoinedLocations.value;
             return;
         }
         const lowerQ = q.toLowerCase();

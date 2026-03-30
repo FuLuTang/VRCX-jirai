@@ -47,7 +47,35 @@
                 <CommandInput :placeholder="t('side_panel.search_placeholder')" />
                 <CommandList class="max-h-[min(400px,50vh)] overflow-y-auto overflow-x-hidden">
                     <template v-if="!query">
-                        <CommandGroup :heading="t('side_panel.search_categories')">
+                        <CommandGroup
+                            v-if="recentlyMetResults.length > 0"
+                            :heading="t('side_panel.search_recently_met')">
+                            <CommandItem
+                                v-for="user in recentlyMetResults"
+                                :key="user.userId"
+                                :value="'recently-met-' + user.userId"
+                                class="gap-3"
+                                @select="handleSelect({ id: user.userId, type: 'recentlyMet' })">
+                                <Clock class="size-4 text-muted-foreground" />
+                                <span class="truncate">{{ user.displayName }}</span>
+                            </CommandItem>
+                        </CommandGroup>
+
+                        <CommandGroup
+                            v-if="recentBeenResults.length > 0"
+                            :heading="t('side_panel.search_recently_joined')">
+                            <CommandItem
+                                v-for="loc in recentBeenResults"
+                                :key="loc.worldId"
+                                :value="'recently-joined-' + loc.worldId"
+                                class="gap-3"
+                                @select="handleSelect({ id: loc.worldId, type: 'recentlyJoined' })">
+                                <History class="size-4 text-muted-foreground" />
+                                <span class="truncate">{{ loc.worldName }}</span>
+                            </CommandItem>
+                        </CommandGroup>
+
+                        <CommandGroup v-if="recentlyMetResults.length === 0 && recentBeenResults.length === 0" :heading="t('side_panel.search_categories')">
                             <CommandItem :value="'hint-friends'" disabled class="gap-3 opacity-70">
                                 <Users class="size-4" />
                                 <span class="flex-1">{{ t('side_panel.search_friends') }}</span>

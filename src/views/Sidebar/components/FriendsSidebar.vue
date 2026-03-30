@@ -206,15 +206,11 @@
                 <Navigation class="w-3.5 h-3.5" />
             </LiquidGlassButton>
         </div>
-        <AutoFollowDialog
-            v-if="isAutoFollowDialogOpen"
-            v-model:open="isAutoFollowDialogOpen"
-        />
     </div>
 </template>
 
 <script setup>
-    import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
+    import { computed, onMounted, reactive, ref, watch } from 'vue';
     import { ChevronDown, Clock, Navigation, User } from 'lucide-vue-next';
     import { storeToRefs } from 'pinia';
     import { toast } from 'vue-sonner';
@@ -255,7 +251,6 @@
     import { parseLocation } from '../../../shared/utils';
 
     import BackToTop from '../../../components/BackToTop.vue';
-    import AutoFollowDialog from '../../../components/dialogs/AutoFollowDialog.vue';
     import LiquidGlassButton from '../../../components/ui/liquid-glass-button/LiquidGlassButton.vue';
     import FriendItem from './FriendItem.vue';
     import Location from '../../../components/Location.vue';
@@ -268,17 +263,12 @@
     const { t } = useI18n();
 
     const autoFollowStore = useAutoFollowStore();
-    const isAutoFollowDialogOpen = ref(false);
 
     function toggleAutoFollow() {
         if (autoFollowStore.isActive) {
             autoFollowStore.stopFollow();
         } else {
-            // Force re-mount each time so the friend list is always fresh
-            isAutoFollowDialogOpen.value = false;
-            nextTick(() => {
-                isAutoFollowDialogOpen.value = true;
-            });
+            autoFollowStore.openDialog();
         }
     }
 

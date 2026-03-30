@@ -1,5 +1,5 @@
 <template>
-    <Dialog :open="open" @update:open="$emit('update:open', $event)">
+    <Dialog v-model:open="autoFollowStore.dialogVisible">
         <DialogContent class="sm:max-w-md">
             <DialogHeader>
                 <DialogTitle>自动跟随</DialogTitle>
@@ -52,7 +52,7 @@
                     <RefreshCw class="h-4 w-4 mr-1.5" :class="{ 'animate-spin': isRefreshing }" />
                     {{ t('dialog.refresh') }}
                 </Button>
-                <Button type="button" variant="secondary" @click="$emit('update:open', false)">
+                <Button type="button" variant="secondary" @click="autoFollowStore.dialogVisible = false">
                     {{ t('dialog.close') }}
                 </Button>
             </DialogFooter>
@@ -83,15 +83,6 @@ import { useAutoFollowStore } from '../../stores/autoFollow';
 import { useUserDisplay } from '../../composables/useUserDisplay';
 import { isRealInstance } from '../../shared/utils';
 
-const props = defineProps({
-    open: {
-        type: Boolean,
-        required: true
-    }
-});
-
-const emit = defineEmits(['update:open']);
-
 const { t } = useI18n();
 const friendStore = useFriendStore();
 const autoFollowStore = useAutoFollowStore();
@@ -119,6 +110,6 @@ async function refreshFriendList() {
 
 function selectFriend(friend) {
     autoFollowStore.startFollow(friend.ref);
-    emit('update:open', false);
+    autoFollowStore.dialogVisible = false;
 }
 </script>
