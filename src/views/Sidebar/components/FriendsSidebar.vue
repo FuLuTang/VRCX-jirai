@@ -261,6 +261,7 @@
 
     import '@/styles/status-icon.css';
     import { showUserDialog } from '../../../coordinators/userCoordinator';
+    import { openAutoFollowDialog } from '../../../coordinators/autoFollowCoordinator';
 
     const { t } = useI18n();
 
@@ -270,7 +271,7 @@
         if (autoFollowStore.isActive) {
             autoFollowStore.stopFollow();
         } else {
-            autoFollowStore.openDialog();
+            openAutoFollowDialog();
         }
     }
 

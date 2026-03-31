@@ -83,7 +83,7 @@
 
         <SendBoopDialog></SendBoopDialog>
 
-        <AutoFollowDialog></AutoFollowDialog>
+        <AutoFollowDialog v-model:open="isAutoFollowDialogOpen"></AutoFollowDialog>
 
         <GlobalToolsDialogs></GlobalToolsDialogs>
 
@@ -127,6 +127,8 @@
     import WorldImportDialog from '../Favorites/dialogs/WorldImportDialog.vue';
     import WhatsNewDialog from '../../components/onboarding/WhatsNewDialog.vue';
     import SpotlightDialog from '../../components/onboarding/SpotlightDialog.vue';
+
+    import { isAutoFollowDialogOpen } from '../../coordinators/autoFollowCoordinator';
 
     const router = useRouter();
 
