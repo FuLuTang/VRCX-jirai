@@ -3,6 +3,11 @@ import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 
 const mocks = vi.hoisted(() => ({
+    autoFollowStore: {
+        isActive: { value: false },
+        stopFollow: vi.fn(),
+        openDialog: vi.fn()
+    },
     friendStore: {
         allFavoriteOnlineFriends: { value: [] },
         allFavoriteFriendIds: { value: new Set() },
@@ -110,6 +115,7 @@ vi.mock('@tanstack/vue-virtual', () => ({
 }));
 
 vi.mock('../../../../stores', () => ({
+    useAutoFollowStore: () => mocks.autoFollowStore,
     useFriendStore: () => mocks.friendStore,
     useAppearanceSettingsStore: () => mocks.appearanceStore,
     useAdvancedSettingsStore: () => mocks.advancedStore,
@@ -212,6 +218,7 @@ vi.mock('../FriendItem.vue', () => ({
 vi.mock('lucide-vue-next', () => ({
     ChevronDown: { template: '<span data-testid="chevron" />' },
     Clock: { template: '<span data-testid="clock" />' },
+    Navigation: { template: '<span data-testid="navigation" />' },
     User: { template: '<i />' }
 }));
 

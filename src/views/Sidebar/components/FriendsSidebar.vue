@@ -210,7 +210,7 @@
 </template>
 
 <script setup>
-    import { computed, onMounted, reactive, ref, watch } from 'vue';
+    import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
     import { ChevronDown, Clock, Navigation, User } from 'lucide-vue-next';
     import { storeToRefs } from 'pinia';
     import { toast } from 'vue-sonner';
