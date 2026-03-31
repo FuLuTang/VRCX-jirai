@@ -1,14 +1,16 @@
 @echo off
+setlocal
+
 echo ===================================================
 echo   VRCX-Jirai Local Windows Portable Build Script
 echo ===================================================
 echo.
 
-:: --- [0/3] Check and Auto-Install .NET SDK ---
+:: --- [0/4] Check and Auto-Install .NET SDK ---
 dotnet --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [INFO] .NET SDK not found on your system.
-    echo [INFO] Attempting to auto-install .NET 10 SDK via Winget...
+    echo [INFO] .NET SDK not found.
+    echo [INFO] Attempting to auto-install .NET 10 SDK via winget...
     echo.
     winget install Microsoft.DotNet.SDK.10 --accept-package-agreements --accept-source-agreements
     if %errorlevel% neq 0 (
@@ -20,12 +22,40 @@ if %errorlevel% neq 0 (
     )
     echo.
     echo [SUCCESS] .NET 10 SDK installed! 
-    echo [IMPORTANT] Please CLOSE this window and RE-RUN the script to refresh PATH.
+    echo [IMPORTANT] Windows requires a shell restart to recognize new environment variables.
+    echo Please CLOSE this window and RE-RUN the script.
     pause
     exit /b 0
 )
 
-echo [1/3] Building Frontend (Vue)...
+:: --- [1/4] Check Node.js & npm ---
+node --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] Node.js not found. Please install Node.js (v24 or later) from https://nodejs.org/
+    pause
+    exit /b 1
+)
+
+npm --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] npm (part of Node.js) not found. Please ensure Node.js is correctly installed.
+    pause
+    exit /b 1
+)
+
+:: --- [2/4] Install Node Dependencies ---
+if not exist "node_modules\" (
+    echo [INFO] node_modules not found. Running "npm install"...
+    call npm install
+    if %errorlevel% neq 0 (
+        echo [ERROR] npm install failed!
+        pause
+        exit /b %errorlevel%
+    )
+)
+
+:: --- [3/4] Building Frontend (Vue) ---
+echo [INFO] Building Frontend (Vue)...
 call npm run prod
 if %errorlevel% neq 0 (
     echo [ERROR] Frontend build failed! Check errors above.
@@ -34,25 +64,27 @@ if %errorlevel% neq 0 (
 )
 echo.
 
-echo [2/3] Building Backend (C#)...
+:: --- [4/4] Building Backend (C#) ---
+echo [INFO] Building Backend (C#)...
 :: Kill any running instances to avoid file lock during PostBuild (nvpatch)
 taskkill /F /IM VRCX-Jirai.exe /T >nul 2>&1
 
 call dotnet build Dotnet/VRCX-Cef.csproj -p:Configuration=Release -p:Platform=x64
 if %errorlevel% neq 0 (
-    echo [ERROR] Backend build failed! Make sure .NET SDK is installed.
+    echo [ERROR] Backend build failed!
     pause
     exit /b %errorlevel%
 )
 echo.
 
-echo [3/3] Merging Resources...
+:: --- Finalize ---
+echo [INFO] Merging Resources...
 if not exist "build\Cef\html" mkdir "build\Cef\html"
 xcopy "build\html" "build\Cef\html" /E /I /H /Y /Q
 if %errorlevel% neq 0 (
     echo [ERROR] Resource merge failed!
     pause
-    exit /b %errorlevel%
+    exit /b 1
 )
 echo.
 
