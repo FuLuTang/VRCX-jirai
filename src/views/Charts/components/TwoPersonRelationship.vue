@@ -1,12 +1,24 @@
 <template>
-    <div id="chart" class="x-container">
-        <div ref="twoPersonRef" class="pt-4">
+    <div id="chart" ref="twoPersonRef" class="x-container">
+        <div class="pt-4">
             <BackToTop :target="twoPersonRef" :right="30" :bottom="30" :teleport="false" />
-
             <div class="options-container mt-0 flex items-center gap-x-3 gap-y-2">
-                <span class="shrink-0">{{ t('view.charts.two_person_relationship.header') }}</span>
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="shrink-0">{{ t('view.charts.two_person_relationship.header') }}</span>
+                    <HoverCard>
+                        <HoverCardTrigger as-child>
+                            <Info class="ml-1 text-xs opacity-70" />
+                        </HoverCardTrigger>
+                        <HoverCardContent side="bottom" align="start" class="w-80">
+                            <div class="text-xs">
+                                {{ t('view.charts.two_person_relationship.tips.description') }}
+                            </div>
+                        </HoverCardContent>
+                    </HoverCard>
+                </div>
 
-                <div class="flex flex-1 items-center gap-2">
+                <div class="flex flex-1 items-center justify-end gap-x-3 gap-y-2 mb-4">
+                    <!-- Friend Selector A -->
                     <VirtualCombobox
                         class="w-[11.2rem]"
                         :model-value="selectedFriendAId"
@@ -38,7 +50,7 @@
                                 <template v-else>
                                     <span>{{ item.label }}</span>
                                 </template>
-                                <CheckIcon
+                                <Check
                                     :class="['ml-auto size-4', selected ? 'opacity-100' : 'opacity-0']" />
                             </div>
                         </template>
@@ -55,6 +67,7 @@
                         </Button>
                     </TooltipWrapper>
 
+                    <!-- Friend Selector B -->
                     <VirtualCombobox
                         class="w-[11.2rem]"
                         :model-value="selectedFriendBId"
@@ -86,20 +99,21 @@
                                 <template v-else>
                                     <span>{{ item.label }}</span>
                                 </template>
-                                <CheckIcon
+                                <Check
                                     :class="['ml-auto size-4', selected ? 'opacity-100' : 'opacity-0']" />
                             </div>
                         </template>
                     </VirtualCombobox>
 
-                    <TooltipWrapper :content="t('view.charts.instance_activity.refresh')" side="top">
+                    <!-- Refresh Button -->
+                    <TooltipWrapper :content="t('view.charts.two_person_relationship.refresh')" side="top">
                         <Button
-                            class="rounded-full"
-                            size="icon"
                             variant="ghost"
+                            size="icon"
+                            class="rounded-full"
                             :disabled="!selectedFriendAId || !selectedFriendBId || isLoading"
                             @click="loadData">
-                            <RefreshCcw />
+                            <RefreshCcw :class="['size-4', isLoading ? 'animate-spin' : '']" />
                         </Button>
                     </TooltipWrapper>
 
@@ -112,20 +126,16 @@
                 </div>
             </div>
 
-            <div
-                v-if="!selectedFriendAId || !selectedFriendBId"
-                class="mt-[100px] flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                <Users class="size-8 opacity-40" />
-                <span class="text-sm">{{ t('view.charts.two_person_relationship.no_friend_selected') }}</span>
-            </div>
-
-            <div v-else-if="isLoading" class="mt-[100px] flex items-center justify-center">
+            <div v-if="isLoading" class="mt-[100px] flex items-center justify-center">
                 <RefreshCcw class="size-6 animate-spin text-muted-foreground" />
             </div>
 
-            <div
-                v-else-if="sharedInstances.length === 0"
-                class="mt-[100px] flex items-center justify-center">
+            <div v-else-if="!selectedFriendAId || !selectedFriendBId" class="mt-[100px] flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                <Users class="size-12 opacity-20" />
+                <p>{{ t('view.charts.two_person_relationship.no_friend_selected') }}</p>
+            </div>
+
+            <div v-else-if="sharedInstances.length === 0" class="mt-[100px] flex flex-col items-center justify-center gap-2 text-muted-foreground">
                 <DataTableEmpty type="nodata" />
             </div>
 
@@ -147,19 +157,20 @@
                     </div>
                 </div>
 
-                <div class="mx-auto mt-3 in-[.is-compact-table]:mt-1.5! in-[.is-comfortable-table]:mt-2! max-w-[900px]">
+                <div class="mx-auto mt-3 in-[.is-compact-table]:mt-1.5! in-[.is-comfortable-table]:mt-2! max-w-[900px] flex flex-col gap-3 pb-8">
                     <button
                         v-for="item in sharedInstances"
                         :key="item.location + '_' + item.friendALeave"
                         type="button"
-                        class="group flex w-full items-center gap-3 rounded-lg px-3 py-2 in-[.is-compact-table]:py-1! in-[.is-comfortable-table]:py-1.5! text-left transition-colors hover:bg-accent">
+                        class="group flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all hover:bg-accent hover:shadow-sm"
+                        @click="openInstanceDialog(item.location)">
                         <div class="w-32 shrink-0 text-xs text-muted-foreground tabular-nums">
                             {{ item.formattedDate }}
                         </div>
 
                         <div class="min-w-0 flex-1">
                             <Location :location="item.location" />
-                            <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
                                 <TooltipWrapper
                                     v-if="item.instanceCreatorName"
                                     :content="t('view.charts.two_person_relationship.instance_creator')"
@@ -181,39 +192,38 @@
                             </div>
                         </div>
 
-                        <div class="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-                            <Clock class="size-3 shrink-0" />
-                            <span class="font-medium tabular-nums">{{ timeToText(item.coexistenceTime, true) }}</span>
-                        </div>
+                        <div class="flex shrink-0 flex-col items-end gap-1.5">
+                            <div class="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Clock class="size-3 shrink-0" />
+                                <span class="font-medium tabular-nums">{{ timeToText(item.coexistenceTime, true) }}</span>
+                            </div>
 
-                        <span
-                            v-if="showSelfPresence"
-                            :class="[
-                                'shrink-0 rounded px-1.5 py-0.5 text-xs font-medium',
-                                item.selfPresent
-                                    ? 'bg-green-500/15 text-green-600 dark:text-green-400'
-                                    : 'bg-red-500/15 text-red-600 dark:text-red-400'
-                            ]">
-                            {{
-                                item.selfPresent
-                                    ? t('view.charts.two_person_relationship.self_present')
-                                    : t('view.charts.two_person_relationship.self_not_present')
-                            }}
-                        </span>
-                        <span
-                            :class="[
-                                'shrink-0 rounded px-1.5 py-0.5 text-xs font-medium',
-                                item.initiator === 'mutual'
-                                    ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
-                                    : 'text-orange-600 dark:text-orange-400'
-                            ]"
-                            :style="item.initiator !== 'mutual' ? {
-                                background: item.initiator === 'leftPlayer'
-                                    ? 'linear-gradient(to right, rgb(249 115 22 / 0.25), rgb(249 115 22 / 0.05))'
-                                    : 'linear-gradient(to left, rgb(249 115 22 / 0.25), rgb(249 115 22 / 0.05))'
-                            } : undefined">
-                            {{ t('view.charts.two_person_relationship.initiator_' + item.initiator) }}
-                        </span>
+                            <div class="flex items-center gap-2">
+                                <span
+                                    v-if="showSelfPresence"
+                                    :class="[
+                                        'shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none',
+                                        item.selfPresent
+                                            ? 'bg-green-500/15 text-green-600 dark:text-green-400'
+                                            : 'bg-red-500/15 text-red-600 dark:text-red-400'
+                                    ]">
+                                    {{
+                                        item.selfPresent
+                                            ? t('view.charts.two_person_relationship.self_present')
+                                            : t('view.charts.two_person_relationship.self_not_present')
+                                    }}
+                                </span>
+                                <span
+                                    :class="[
+                                        'shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none',
+                                        item.initiator === 'mutual'
+                                            ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
+                                            : 'bg-orange-500/15 text-orange-600 dark:text-orange-400'
+                                    ]">
+                                    {{ t('view.charts.two_person_relationship.initiator_' + item.initiator) }}
+                                </span>
+                            </div>
+                        </div>
                     </button>
                 </div>
             </template>
@@ -222,34 +232,38 @@
 </template>
 
 <script setup>
-    defineOptions({ name: 'ChartsTwoPerson' });
+    defineOptions({ name: 'ChartsTwoPersonRelationship' });
 
-    import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+    import { computed, onMounted, ref } from 'vue';
     import {
         ArrowLeftRight,
-        Check as CheckIcon,
+        Check,
         Clock,
         Crown,
         Hash,
+        Info,
         RefreshCcw,
         Users
     } from 'lucide-vue-next';
     import { storeToRefs } from 'pinia';
     import { useI18n } from 'vue-i18n';
+    import dayjs from 'dayjs';
 
     import BackToTop from '@/components/BackToTop.vue';
     import { Button } from '@/components/ui/button';
     import { DataTableEmpty } from '@/components/ui/data-table';
+    import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
     import { Switch } from '@/components/ui/switch';
     import { VirtualCombobox } from '@/components/ui/virtual-combobox';
+    import TooltipWrapper from '@/components/ui/tooltip/TooltipWrapper.vue';
+    import Location from '@/components/Location.vue';
 
-    import dayjs from 'dayjs';
-
-    import { database } from '../../../services/database';
-    import { parseLocation } from '../../../shared/utils/locationParser';
-    import { timeToText } from '../../../shared/utils';
-    import { useAppearanceSettingsStore, useFriendStore, useUserStore } from '../../../stores';
-    import { useUserDisplay } from '../../../composables/useUserDisplay';
+    import { showInstanceDialog } from '@/coordinators/instanceCoordinator';
+    import { database } from '@/services/database';
+    import { parseLocation } from '@/shared/utils/locationParser';
+    import { timeToText } from '@/shared/utils';
+    import { useAppearanceSettingsStore, useFriendStore, useUserStore } from '@/stores';
+    import { useUserDisplay } from '@/composables/useUserDisplay';
 
     const { t } = useI18n();
 
@@ -262,7 +276,8 @@
     const maxPlayerCountMap = ref(new Map());
     const showSelfPresence = ref(false);
 
-    const { dtHour12 } = storeToRefs(useAppearanceSettingsStore());
+    const appearanceStore = useAppearanceSettingsStore();
+    const { dtHour12 } = storeToRefs(appearanceStore);
     const friendStore = useFriendStore();
     const userStore = useUserStore();
     const { friends } = storeToRefs(friendStore);
@@ -270,18 +285,6 @@
     const cachedUsers = userStore.cachedUsers;
 
     const { userImage, userStatusClass } = useUserDisplay();
-
-    const containerResizeObserver = new ResizeObserver(() => {
-        setContainerHeight();
-    });
-
-    function setContainerHeight() {
-        if (twoPersonRef.value) {
-            const availableHeight = window.innerHeight - 110;
-            twoPersonRef.value.style.height = `${availableHeight}px`;
-            twoPersonRef.value.style.overflowY = 'auto';
-        }
-    }
 
     function buildFriendItems(excludeId) {
         return allFriendItems.value.filter((item) => item.value !== excludeId);
@@ -319,27 +322,18 @@
         }
     ]);
 
-    /**
-     * Resolve a user ID to a display name via the cached users map.
-     * Falls back to the raw user ID if not found.
-     */
     function resolveDisplayName(userId) {
         if (!userId) return null;
         const cached = cachedUsers.get(userId);
         return cached?.displayName || userId;
     }
 
-    /**
-     * Determine whether the current user was present during the A-B overlap window.
-     * Checks all self-presence sessions for this location.
-     */
     function computeSelfPresent(location, overlapStart, overlapEnd) {
         const sessions = selfPresenceMap.value.get(location);
         if (!sessions || sessions.length === 0) return false;
         for (const session of sessions) {
             const selfLeaveMs = dayjs(session.selfLeave).valueOf();
             const selfJoinMs = selfLeaveMs - Math.max(0, session.selfTime);
-            // Overlap: self's session intersects with the A-B co-presence window
             if (selfJoinMs < overlapEnd && selfLeaveMs > overlapStart) {
                 return true;
             }
@@ -351,7 +345,6 @@
         const dateFormat = dtHour12.value ? 'YYYY-MM-DD hh:mm A' : 'YYYY-MM-DD HH:mm';
         const THREE_MINUTES = 3 * 60 * 1000;
 
-        // First pass: find the earliest overlap start per location to determine the initiator
         const firstMeetingByLocation = new Map();
         for (const row of rawResults.value) {
             const aLeave = dayjs(row.friendALeave).valueOf();
@@ -377,18 +370,13 @@
                 const overlapEnd = Math.min(friendALeaveMs, friendBLeaveMs);
                 const coexistenceTime = Math.max(0, overlapEnd - overlapStart);
 
-                // Instance creator from location string
                 const parsedLoc = parseLocation(row.location);
                 const instanceCreatorId = parsedLoc.userId || null;
                 const instanceCreatorName = resolveDisplayName(instanceCreatorId);
 
-                // Max concurrent player count
                 const maxPlayerCount = maxPlayerCountMap.value.get(row.location) ?? null;
-
-                // Self presence during overlap
                 const selfPresent = computeSelfPresent(row.location, overlapStart, overlapEnd);
 
-                // Initiator (主动方): based on who joined later at the first meeting in this instance
                 const first = firstMeetingByLocation.get(row.location);
                 let initiator = 'mutual';
                 if (first) {
@@ -427,7 +415,6 @@
             );
             rawResults.value = results;
 
-            // Collect unique locations for auxiliary queries
             const locations = [...new Set(results.map((r) => r.location))];
 
             const [selfMap, maxMap] = await Promise.all([
@@ -481,14 +468,14 @@
         }
     }
 
-    onMounted(() => {
-        if (twoPersonRef.value) {
-            containerResizeObserver.observe(twoPersonRef.value);
+    function openInstanceDialog(location) {
+        const parsed = parseLocation(location);
+        if (parsed.worldId && parsed.instanceId) {
+            showInstanceDialog(parsed.worldId, parsed.instanceId);
         }
-        setContainerHeight();
-    });
+    }
 
-    onBeforeUnmount(() => {
-        containerResizeObserver.disconnect();
+    onMounted(() => {
+        // We've removed manual height management; .x-container handles it now.
     });
 </script>
