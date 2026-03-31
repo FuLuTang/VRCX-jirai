@@ -84,7 +84,12 @@
         "online": "在线",
         "active": "活跃中（仅登录网页端）",
         "offline": "离线",
-        "pending_offline": "可能离线"
+        "pending_offline": "可能离线",
+        "tracked_nonfriends": {
+            "tab_label": "追踪非好友",
+            "empty": "还没有追踪任何非好友。在关系网中右键点击节点可以追踪非好友。",
+            "remove_tooltip": "取消追踪"
+        }
     },
     "view": {
         "login": {
@@ -406,6 +411,33 @@
                     "layout_spacing_help": "好友节点的分布范围。数值越高，关系网内的节点距离越远。",
                     "edge_curvature": "连接线曲率",
                     "edge_curvature_help": "连接线的弯曲程度。数值越高，密集区域的线条越平滑。"
+                },
+                "tracked_nonfriend": {
+                    "track_tooltip": "追踪此非好友",
+                    "untrack_tooltip": "取消追踪此非好友",
+                    "track_hint": "请先在关系网中右键点击一个节点",
+                    "added": "已追踪 {name}",
+                    "removed": "已取消追踪 {name}"
+                },
+                "manual_relations": {
+                    "button_tooltip": "手动判定好友关系",
+                    "dialog_title": "手动好友关系管理",
+                    "tab_list": "已添加关系",
+                    "tab_add": "添加关系",
+                    "tab_suggest": "推荐配对",
+                    "list_empty": "还没有手动添加任何好友关系。",
+                    "user_a": "用户 A",
+                    "user_b": "用户 B",
+                    "user_placeholder": "选择一个用户...",
+                    "user_search": "搜索好友...",
+                    "add_button": "添加联系",
+                    "already_exists": "该关系已存在。",
+                    "suggest_description": "根据共同好友数据，以下配对可能存在尚未记录的好友关系。",
+                    "suggest_button": "开始分析",
+                    "suggest_score": "评分: {score}",
+                    "suggest_confirm": "添加",
+                    "suggest_dismiss": "跳过",
+                    "suggest_none": "没有找到推荐配对，请先抓取共同好友数据。"
                 }
             },
             "hot_worlds": {

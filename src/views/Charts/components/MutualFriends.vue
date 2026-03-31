@@ -60,6 +60,27 @@
                     </VirtualCombobox>
                 </div>
                 <div class="ml-auto flex items-center gap-2">
+                    <TooltipWrapper :content="t('view.charts.mutual_friend.manual_relations.button_tooltip')" side="top">
+                        <Button class="rounded-full" size="icon" variant="ghost" @click="isManualRelationsDialogOpen = true">
+                            <LinkIcon />
+                        </Button>
+                    </TooltipWrapper>
+                    <TooltipWrapper
+                        :content="contextMenuTrackedNodeId
+                            ? (trackedNonFriendsStore.isTracked(contextMenuTrackedNodeId)
+                                ? t('view.charts.mutual_friend.tracked_nonfriend.untrack_tooltip')
+                                : t('view.charts.mutual_friend.tracked_nonfriend.track_tooltip'))
+                            : t('view.charts.mutual_friend.tracked_nonfriend.track_hint')"
+                        side="top">
+                        <Button
+                            class="rounded-full"
+                            size="icon"
+                            variant="ghost"
+                            :disabled="!contextMenuTrackedNodeId"
+                            @click="toggleTrackNode">
+                            <UsersIcon />
+                        </Button>
+                    </TooltipWrapper>
                     <Sheet>
                         <SheetTrigger as-child>
                             <div>
@@ -272,6 +293,7 @@
         </div>
         <BackToTop target="#chart" :right="30" :bottom="30" />
     </div>
+    <ManualRelationsDialog v-model:open="isManualRelationsDialogOpen" />
 </template>
 
 <script setup>
@@ -292,8 +314,10 @@
     import {
         Check as CheckIcon,
         EyeOff as EyeOffIcon,
+        Link as LinkIcon,
         RefreshCw as RefreshCwIcon,
         Settings,
+        Users as UsersIcon,
         User as UserIcon
     } from 'lucide-vue-next';
     import { Button } from '@/components/ui/button';
@@ -301,6 +325,7 @@
     import { Slider } from '@/components/ui/slider';
     import { Spinner } from '@/components/ui/spinner';
     import { VirtualCombobox } from '@/components/ui/virtual-combobox';
+    import TooltipWrapper from '@/components/ui/tooltip/TooltipWrapper.vue';
     import { createNodeBorderProgram } from '@sigma/node-border';
     import { storeToRefs } from 'pinia';
     import { toast } from 'vue-sonner';
@@ -326,8 +351,12 @@
     import { showUserDialog } from '../../../coordinators/userCoordinator';
     import { database } from '../../../services/database';
     import { watchState } from '../../../services/watchState';
+    import { useTrackedNonFriendsStore } from '../../../stores/trackedNonFriends';
+    import { useManualRelationsStore } from '../../../stores/manualRelations';
 
     import configRepository from '../../../services/config';
+
+    import ManualRelationsDialog from './ManualRelationsDialog.vue';
 
     const { userImage, userStatusClass } = useUserDisplay();
     const { t } = useI18n();
@@ -336,13 +365,18 @@
     const modalStore = useModalStore();
     const chartsStore = useChartsStore();
     const appearanceStore = useAppearanceSettingsStore();
+    const trackedNonFriendsStore = useTrackedNonFriendsStore();
+    const manualRelationsStore = useManualRelationsStore();
     const { friends } = storeToRefs(friendStore);
     const { currentUser } = storeToRefs(userStore);
     const { isDarkMode } = storeToRefs(appearanceStore);
+    const { trackedSet: trackedNonFriendSet } = storeToRefs(trackedNonFriendsStore);
     const cachedUsers = userStore.cachedUsers;
 
     const fetchState = chartsStore.mutualGraphFetchState;
     const status = chartsStore.mutualGraphStatus;
+
+    const isManualRelationsDialogOpen = ref(false);
 
     const MAX_LABEL_NAME_LENGTH = 20;
 
@@ -564,6 +598,7 @@
     const selectedFriendId = ref(null);
 
     const contextMenuNodeId = ref(null);
+    const contextMenuTrackedNodeId = ref(null);
     const graphMeta = ref(new Map());
     const isRefreshingNode = ref(false);
 
@@ -894,7 +929,13 @@
             const degree = nodeDegree.get(id) || 0;
             const size = 4 + (maxDegree ? (degree / maxDegree) * 18 : 0);
             const label = truncateLabelText(nodeNames.get(id) || id);
-            const attrs = { label, size, type: 'border' };
+            const isFriend = friends.value?.has ? friends.value.has(id) : false;
+            const attrs = {
+                label,
+                size,
+                type: 'border',
+                trackedNonFriend: !isFriend && trackedNonFriendSet.value.has(id)
+            };
             if (meta?.has(id)) {
                 const m = meta.get(id);
                 attrs.optedOut = m.optedOut;
@@ -1038,8 +1079,18 @@
                 res.borderColor = '#9ca3af';
             }
 
+            // Tracked non-friends: apply 50% transparency
+            if (data.trackedNonFriend) {
+                res.color = data.color
+                    ? data.color.replace(/^#([0-9a-f]{6})$/i, (_, hex) => `#${hex}80`)
+                    : 'rgba(148,163,184,0.5)';
+                res.labelColor = 'rgba(148,163,184,0.5)';
+            }
+
             if (!hovered) {
-                res.color = data.optedOut ? '#d1d5db' : data.color;
+                if (!data.trackedNonFriend) {
+                    res.color = data.optedOut ? '#d1d5db' : data.color;
+                }
                 res.zIndex = 1;
                 return res;
             }
@@ -1118,10 +1169,12 @@
 
         sigmaInstance.on('rightClickNode', ({ node }) => {
             contextMenuNodeId.value = node || null;
+            contextMenuTrackedNodeId.value = node || null;
         });
 
         sigmaInstance.on('rightClickStage', () => {
             contextMenuNodeId.value = null;
+            contextMenuTrackedNodeId.value = null;
         });
 
         sigmaInstance.refresh();
@@ -1330,5 +1383,28 @@
         } finally {
             isRefreshingNode.value = false;
         }
+    }
+
+    /**
+     * Toggle tracking a non-friend node selected via right-click in the graph.
+     */
+    async function toggleTrackNode() {
+        const nodeId = contextMenuTrackedNodeId.value;
+        if (!nodeId) return;
+        const cached = cachedUsers.get(nodeId);
+        const displayName = cached?.displayName || nodeId;
+        await trackedNonFriendsStore.toggleTrackedNonFriend(nodeId, displayName);
+        // Refresh graph node attribute so opacity updates
+        if (currentGraph && currentGraph.hasNode(nodeId)) {
+            currentGraph.setNodeAttribute(nodeId, 'trackedNonFriend', trackedNonFriendsStore.isTracked(nodeId));
+            sigmaInstance?.refresh();
+        }
+        const isNowTracked = trackedNonFriendsStore.isTracked(nodeId);
+        toast.success(
+            isNowTracked
+                ? t('view.charts.mutual_friend.tracked_nonfriend.added', { name: displayName })
+                : t('view.charts.mutual_friend.tracked_nonfriend.removed', { name: displayName }),
+            { duration: 3000 }
+        );
     }
 </script>

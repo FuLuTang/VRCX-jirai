@@ -218,6 +218,11 @@
             "past_notifications": "Last 24 hours",
             "no_new_notifications": "No new notifications in the past 24 hours",
             "no_unseen_notifications": "No unread notifications"
+        },
+        "tracked_nonfriends": {
+            "tab_label": "Tracked",
+            "empty": "No tracked non-friends. Right-click a node in the relationship graph to track a non-friend.",
+            "remove_tooltip": "Remove from tracking"
         }
     },
     "view": {
@@ -582,6 +587,33 @@
                     "user_opted_out": "This user has disabled mutual friends sharing. Existing data has been preserved.",
                     "refresh_error": "Failed to refresh mutual friends data",
                     "last_fetched": "Last fetched"
+                },
+                "tracked_nonfriend": {
+                    "track_tooltip": "Track this non-friend",
+                    "untrack_tooltip": "Stop tracking this non-friend",
+                    "track_hint": "Right-click a node in the graph to select it",
+                    "added": "Now tracking {name}",
+                    "removed": "Stopped tracking {name}"
+                },
+                "manual_relations": {
+                    "button_tooltip": "Manual friendship relations",
+                    "dialog_title": "Manual Friend Relations",
+                    "tab_list": "Relations",
+                    "tab_add": "Add",
+                    "tab_suggest": "Suggestions",
+                    "list_empty": "No manual relations added yet.",
+                    "user_a": "Person A",
+                    "user_b": "Person B",
+                    "user_placeholder": "Select a person...",
+                    "user_search": "Search friends...",
+                    "add_button": "Add Connection",
+                    "already_exists": "This relation already exists.",
+                    "suggest_description": "Based on mutual friend data, these pairs may have a friendship relationship that is not yet captured.",
+                    "suggest_button": "Run Analysis",
+                    "suggest_score": "Score: {score}",
+                    "suggest_confirm": "Add",
+                    "suggest_dismiss": "Skip",
+                    "suggest_none": "No suggestions found. Try fetching mutual friend data first."
                 }
             },
             "hot_worlds": {

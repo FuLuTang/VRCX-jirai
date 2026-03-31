@@ -20,7 +20,9 @@ import { runHandleAutoLoginFlow } from '../coordinators/authAutoLoginCoordinator
 import { getCurrentUser } from '../coordinators/userCoordinator';
 import { useAdvancedSettingsStore } from './settings/advanced';
 import { useGeneralSettingsStore } from './settings/general';
+import { useManualRelationsStore } from './manualRelations';
 import { useModalStore } from './modal';
+import { useTrackedNonFriendsStore } from './trackedNonFriends';
 import { useUpdateLoopStore } from './updateLoop';
 import { useUserStore } from './user';
 import { useVrcxStore } from './vrcx';
@@ -35,6 +37,8 @@ import * as workerTimers from 'worker-timers';
 export const useAuthStore = defineStore('Auth', () => {
     const advancedSettingsStore = useAdvancedSettingsStore();
     const generalSettingsStore = useGeneralSettingsStore();
+    const trackedNonFriendsStore = useTrackedNonFriendsStore();
+    const manualRelationsStore = useManualRelationsStore();
     const userStore = useUserStore();
     const updateLoopStore = useUpdateLoopStore();
     const modalStore = useModalStore();
@@ -1010,6 +1014,8 @@ export const useAuthStore = defineStore('Auth', () => {
     async function loginComplete() {
         await database.initUserTables(userStore.currentUser.id);
         advancedSettingsStore.runAvatarAutoCleanup(userStore.currentUser.id);
+        await trackedNonFriendsStore.loadTrackedNonFriends();
+        await manualRelationsStore.loadManualRelations();
         watchState.isLoggedIn = true;
         AppApi.CheckGameRunning(); // restore state from hot-reload
     }
