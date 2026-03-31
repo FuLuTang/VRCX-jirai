@@ -1,5 +1,5 @@
 <template>
-    <Dialog v-model:open="autoFollowStore.dialogVisible">
+    <Dialog v-model:open="dialogVisible">
         <DialogContent class="sm:max-w-md">
             <DialogHeader>
                 <DialogTitle>自动跟随</DialogTitle>
@@ -44,7 +44,7 @@
                     <RefreshCw class="h-4 w-4 mr-1.5" :class="{ 'animate-spin': isRefreshing }" />
                     {{ t('dialog.refresh') }}
                 </Button>
-                <Button type="button" variant="secondary" @click="autoFollowStore.dialogVisible = false">
+                <Button type="button" variant="secondary" @click="dialogVisible = false">
                     {{ t('dialog.close') }}
                 </Button>
             </DialogFooter>
@@ -77,6 +77,7 @@ const { t } = useI18n();
 const friendStore = useFriendStore();
 const autoFollowStore = useAutoFollowStore();
 const { sortedFriends } = storeToRefs(friendStore);
+const { dialogVisible } = storeToRefs(autoFollowStore);
 const { userImage, userStatusClass } = useUserDisplay();
 
 const isRefreshing = ref(false);
@@ -100,6 +101,6 @@ async function refreshFriendList() {
 
 function selectFriend(friend) {
     autoFollowStore.startFollow(friend.ref || friend);
-    autoFollowStore.dialogVisible = false;
+    dialogVisible.value = false;
 }
 </script>
