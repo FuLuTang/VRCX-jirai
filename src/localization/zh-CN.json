@@ -428,6 +428,17 @@
                     "show_tooltip": "在关系网中显示追踪的非好友",
                     "hide_tooltip": "在关系网中隐藏追踪的非好友"
                 },
+                "context_menu": {
+                    "view_details": "查看详情",
+                    "hide_friend": "从关系网中隐藏",
+                    "refresh_mutuals": "刷新共同好友",
+                    "confirm_non_friend_title": "非好友用户",
+                    "confirm_non_friend_message": "此用户已不再是你的好友，仍要拉取其共同好友数据吗？",
+                    "refresh_success": "已更新 {name} 的共同好友数据",
+                    "user_opted_out": "此用户已关闭共同好友功能，现有数据已保留",
+                    "refresh_error": "刷新共同好友数据失败",
+                    "last_fetched": "上次拉取时间"
+                },
                 "manual_relations": {
                     "button_tooltip": "手动判定好友关系",
                     "dialog_title": "手动好友关系管理",
