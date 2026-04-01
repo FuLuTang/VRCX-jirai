@@ -7,6 +7,7 @@ import { runRefreshFriendsListFlow } from '../coordinators/friendSyncCoordinator
 import { runUpdateIsGameRunningFlow } from '../coordinators/gameCoordinator';
 import { addGameLogEvent } from '../coordinators/gameLogCoordinator';
 import { runRefreshPlayerModerationsFlow } from '../coordinators/moderationCoordinator';
+import { refreshTrackedNonFriendsFlow } from '../coordinators/nonFriendCoordinator';
 import { clearVRCXCache } from '../coordinators/vrcxCoordinator';
 import { useAuthStore } from './auth';
 import { useDiscordPresenceSettingsStore } from './settings/discordPresence';
@@ -35,6 +36,7 @@ export const useUpdateLoopStore = defineStore('UpdateLoop', () => {
     const state = {
         nextCurrentUserRefresh: 300,
         nextFriendsRefresh: 3600,
+        nextNonFriendRefresh: 3600,
         nextGroupInstanceRefresh: 0,
         nextAppUpdateCheck: 3600,
         ipcTimeout: 0,
@@ -51,6 +53,7 @@ export const useUpdateLoopStore = defineStore('UpdateLoop', () => {
         () => {
             state.nextCurrentUserRefresh = 300;
             state.nextFriendsRefresh = 3600;
+            state.nextNonFriendRefresh = 3600;
             state.nextGroupInstanceRefresh = 0;
         },
         { flush: 'sync' }
@@ -85,6 +88,10 @@ export const useUpdateLoopStore = defineStore('UpdateLoop', () => {
                     ) {
                         runRefreshPlayerModerationsFlow();
                     }
+                }
+                if (--state.nextNonFriendRefresh <= 0) {
+                    state.nextNonFriendRefresh = 3600; // 1hour
+                    refreshTrackedNonFriendsFlow();
                 }
                 if (--state.nextGroupInstanceRefresh <= 0) {
                     if (watchState.isFriendsLoaded) {

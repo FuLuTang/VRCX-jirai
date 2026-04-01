@@ -156,14 +156,14 @@ const toolDefinitions = [
         action: { type: 'dialog', dialogKey: 'auto-change-status' }
     },
     {
-        key: 'bio-fetch',
+        key: 'info-completion',
         category: 'system',
         iconKey: 'database',
         navIcon: 'ri-database-2-line',
-        titleKey: 'view.tools.system_tools.bio_fetch',
-        descriptionKey: 'view.tools.system_tools.bio_fetch_description',
-        navEligible: false,
-        action: { type: 'dialog', dialogKey: 'bio-fetch' }
+        titleKey: 'view.tools.system_tools.info_completion',
+        descriptionKey: 'view.tools.system_tools.info_completion_description',
+        navEligible: true,
+        action: { type: 'dialog', dialogKey: 'infoCompletion' }
     },
     {
         key: 'group-calendar',

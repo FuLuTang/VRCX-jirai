@@ -258,11 +258,11 @@
     import TooltipWrapper from '@/components/ui/tooltip/TooltipWrapper.vue';
     import Location from '@/components/Location.vue';
 
-    import { showInstanceDialog } from '@/coordinators/instanceCoordinator';
+    import { showWorldDialog } from '@/coordinators/worldCoordinator';
     import { database } from '@/services/database';
     import { parseLocation } from '@/shared/utils/locationParser';
     import { timeToText } from '@/shared/utils';
-    import { useAppearanceSettingsStore, useFriendStore, useUserStore } from '@/stores';
+    import { useAppearanceSettingsStore, useFriendStore, useTrackedNonFriendsStore, useUserStore } from '@/stores';
     import { useUserDisplay } from '@/composables/useUserDisplay';
 
     const { t } = useI18n();
@@ -280,7 +280,9 @@
     const { dtHour12 } = storeToRefs(appearanceStore);
     const friendStore = useFriendStore();
     const userStore = useUserStore();
+    const trackedStore = useTrackedNonFriendsStore();
     const { friends } = storeToRefs(friendStore);
+    const { trackedList } = storeToRefs(trackedStore);
     const { currentUser } = storeToRefs(userStore);
     const cachedUsers = userStore.cachedUsers;
 
@@ -292,8 +294,12 @@
 
     const allFriendItems = computed(() => {
         const items = [];
+        const seenIds = new Set();
+        const selfId = currentUser.value?.id;
+
+        // 1. Friends
         for (const [friendId, friend] of friends.value.entries()) {
-            if (friendId === currentUser.value?.id) continue;
+            if (friendId === selfId) continue;
             const cached = cachedUsers.get(friendId);
             const displayName = friend.displayName || cached?.displayName || friendId;
             items.push({
@@ -302,7 +308,23 @@
                 search: displayName,
                 user: cached || null
             });
+            seenIds.add(friendId);
         }
+
+        // 2. Tracked Non-Friends
+        for (const item of trackedList.value) {
+            if (item.userId === selfId || seenIds.has(item.userId)) continue;
+            const cached = cachedUsers.get(item.userId);
+            const displayName = item.displayName || cached?.displayName || item.userId;
+            items.push({
+                value: item.userId,
+                label: displayName,
+                search: displayName,
+                user: cached || null
+            });
+            seenIds.add(item.userId);
+        }
+
         items.sort((a, b) => a.label.localeCompare(b.label));
         return items;
     });
@@ -469,9 +491,8 @@
     }
 
     function openInstanceDialog(location) {
-        const parsed = parseLocation(location);
-        if (parsed.worldId && parsed.instanceId) {
-            showInstanceDialog(parsed.worldId, parsed.instanceId);
+        if (location) {
+            showWorldDialog(location);
         }
     }
 

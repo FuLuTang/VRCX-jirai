@@ -6,6 +6,7 @@ import { friendFavorites } from './friendFavorites.js';
 import { friendLogCurrent } from './friendLogCurrent.js';
 import { friendLogHistory } from './friendLogHistory.js';
 import { gameLog } from './gameLog.js';
+import { manualRelations } from './manualRelations.js';
 import { memos } from './memos.js';
 import { moderation } from './moderation.js';
 import { mutualGraph } from './mutualGraph.js';
@@ -13,6 +14,7 @@ import { notifications } from './notifications.js';
 import { tableAlter } from './tableAlter.js';
 import { tableFixes } from './tableFixes.js';
 import { tableSize } from './tableSize.js';
+import { trackedNonFriends } from './trackedNonFriends.js';
 import { worldFavorites } from './worldFavorites.js';
 
 import sqliteService from '../sqlite.js';
@@ -41,6 +43,8 @@ const database = {
     ...tableFixes,
     ...tableSize,
     ...mutualGraph,
+    ...trackedNonFriends,
+    ...manualRelations,
 
     setMaxTableSize(limit) {
         dbVars.maxTableSize = limit;
@@ -155,6 +159,12 @@ const database = {
         );
         await sqliteService.executeNonQuery(
             `CREATE TABLE IF NOT EXISTS ${dbVars.userPrefix}_mutual_graph_meta (friend_id TEXT PRIMARY KEY, last_fetched_at TEXT, opted_out INTEGER DEFAULT 0)`
+        );
+        await sqliteService.executeNonQuery(
+            `CREATE TABLE IF NOT EXISTS ${dbVars.userPrefix}_tracked_nonfriends (user_id TEXT PRIMARY KEY, display_name TEXT, added_at TEXT)`
+        );
+        await sqliteService.executeNonQuery(
+            `CREATE TABLE IF NOT EXISTS ${dbVars.userPrefix}_manual_relations_MANUEL (user_id_a TEXT NOT NULL, user_id_b TEXT NOT NULL, relation_type TEXT NOT NULL DEFAULT 'friend', added_at TEXT, PRIMARY KEY(user_id_a, user_id_b))`
         );
     },
 

@@ -218,6 +218,18 @@
             "past_notifications": "Last 24 hours",
             "no_new_notifications": "No new notifications in the past 24 hours",
             "no_unseen_notifications": "No unread notifications"
+        },
+        "tracked_nonfriends": {
+            "tab_label": "Tracked",
+            "empty": "No tracked non-friends yet. Click \"+\" to add one by user ID, or use the \"⋯\" menu in any user's profile.",
+            "remove_tooltip": "Remove from tracking",
+            "add_button": "Add +",
+            "add_dialog_title": "Track a User",
+            "add_dialog_hint": "Enter the user ID manually (usr_xxx...), or open any user's profile in VRCX-jirai and use the \"⋯\" → \"Track\" option.",
+            "add_input_placeholder": "usr_xxx...",
+            "add_verify_error": "Could not retrieve user data. Please check the ID and try again.",
+            "add_confirm_question": "Is this user \"{name}\"?",
+            "add_back": "Back"
         }
     },
     "view": {
@@ -582,6 +594,40 @@
                     "user_opted_out": "This user has disabled mutual friends sharing. Existing data has been preserved.",
                     "refresh_error": "Failed to refresh mutual friends data",
                     "last_fetched": "Last fetched"
+                },
+                "tracked_nonfriend": {
+                    "track_tooltip": "Track this non-friend",
+                    "untrack_tooltip": "Stop tracking this non-friend",
+                    "track_hint": "Right-click a node in the graph to select it",
+                    "added": "Now tracking {name}",
+                    "removed": "Stopped tracking {name}",
+                    "show_tooltip": "Show tracked non-friends in graph",
+                    "hide_tooltip": "Hide tracked non-friends in graph"
+                },
+                "manual_relations": {
+                    "button_tooltip": "Manual friendship relations",
+                    "dialog_title": "Manual Friend Relations",
+                    "tab_list": "Relations",
+                    "tab_add": "Add",
+                    "tab_suggest": "Suggestions",
+                    "list_empty": "No manual relations added yet.",
+                    "user_a": "Person A",
+                    "user_b": "Person B",
+                    "user_placeholder": "Select a person...",
+                    "user_search": "Search friends...",
+                    "add_button": "Add Connection",
+                    "already_exists": "This relation already exists.",
+                    "suggest_description": "Based on mutual friend data, these pairs may have a friendship relationship that is not yet captured.",
+                    "suggest_button": "Run Analysis",
+                    "suggest_score": "Score: {score}",
+                    "suggest_confirm": "Add",
+                    "suggest_dismiss": "Skip",
+                    "suggest_none": "No suggestions found. Try fetching mutual friend data first."
+                },
+                "legend": {
+                    "mutual": "Mutual Relationship",
+                    "manual": "Manual Relation",
+                    "non_friend": "Includes Non-friend"
                 }
             },
             "hot_worlds": {
@@ -707,15 +753,18 @@
                 "launch_options_description": "Edit VRChat launch options",
                 "registry_backup": "VRChat Registry Backup",
                 "registry_backup_description": "Create or restore a VRChat registry backup",
-                "bio_fetch": "Bio Completion Fetch",
-                "bio_fetch_description": "Scan all friends' cached bios and save any new or changed bios to the database",
-                "bio_fetch_hint": "Ready to scan {count} friends.",
-                "bio_fetch_start": "Start Fetch",
-                "bio_fetch_again": "Fetch Again",
-                "bio_fetch_cancel": "Cancel",
-                "bio_fetch_close": "Close",
-                "bio_fetch_progress": "Scanning {current} / {total}...",
-                "bio_fetch_done": "Done — saved {updated} new/changed bios out of {total} friends."
+                "info_completion": "Profile Info Sync & Completion",
+                "info_completion_description": "Scan and fetch the latest profiles for all friends and tracked users, saving new or updated bios and status to the database.",
+                "info_completion_hint": "Ready to scan {count} targets.",
+                "info_completion_start": "Start Sync",
+                "info_completion_again": "Sync Again",
+                "info_completion_cancel": "Cancel",
+                "info_completion_close": "Close",
+                "info_completion_progress": "Scanning {current} / {total}...",
+                "info_completion_done": "Done — saved {updated} updates from {total} targets.",
+                "info_completion_tooltip_running": "Syncing Info {done}/{total} (Bio +{bio}, Status +{status})",
+                "info_completion_tooltip_done": "Sync Done: Updated {bio} bios, {status} statuses (Click to re-sync)",
+                "info_completion_tooltip_idle": "Profile Info Sync (Click to start)"
             },
             "other": {
                 "header": "Other",
@@ -1394,7 +1443,9 @@
                 "unfriend_success_msg": "Unfriended",
                 "logout": "Logout",
                 "edit_note_memo": "Edit Note and Memo",
-                "reset_home": "Reset Home"
+                "reset_home": "Reset Home",
+                "track_stranger": "Track This User",
+                "untrack_stranger": "Stop Tracking This User"
             },
             "info": {
                 "header": "Info",
@@ -3190,6 +3241,7 @@
         "clock": "Clock",
         "clocks_label": "Clocks",
         "clocks_none": "None",
+        "info_sync": "Sync",
         "timezone": "Timezone"
     }
 }

@@ -27,6 +27,9 @@ export async function runRefreshFriendsListFlow() {
     }
     await friendStore.refreshFriends();
     reconnectWebSocket();
+
+    // L4 末尾：静默执行信息补全（bio + 隐私状态），不阻塞主流程
+    runSilentInfoFetch();
 }
 
 /**

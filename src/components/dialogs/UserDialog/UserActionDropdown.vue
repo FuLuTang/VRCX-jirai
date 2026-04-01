@@ -223,6 +223,15 @@
                             {{ t('dialog.user.actions.unfriend') }}
                         </DropdownMenuItem>
                     </template>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem v-if="isTracked" variant="destructive" @click="onToggleTrack">
+                        <UserMinus class="size-4" />
+                        {{ t('dialog.user.actions.untrack_stranger') }}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem v-else @click="onToggleTrack">
+                        <UserPlus class="size-4" />
+                        {{ t('dialog.user.actions.track_stranger') }}
+                    </DropdownMenuItem>
                 </template>
             </DropdownMenuContent>
         </DropdownMenu>
@@ -250,6 +259,8 @@
         Star,
         Trash2,
         User,
+        UserMinus,
+        UserPlus,
         VolumeX,
         X,
         XCircle
@@ -268,6 +279,7 @@
         DropdownMenuTrigger
     } from '../../ui/dropdown-menu';
     import { useGameStore, useLocationStore, useUserStore } from '../../../stores';
+    import { useTrackedNonFriendsStore } from '../../../stores/trackedNonFriends';
     import { useInviteChecks } from '../../../composables/useInviteChecks';
     import { isActionRecent } from '../../../composables/useRecentActions';
 
@@ -284,6 +296,7 @@
     const { isGameRunning } = storeToRefs(useGameStore());
     const { lastLocation } = storeToRefs(useLocationStore());
     const { checkCanInvite } = useInviteChecks();
+    const trackedNonFriendsStore = useTrackedNonFriendsStore();
 
     const hasRequest = computed(() => userDialog.value.incomingRequest || userDialog.value.outgoingRequest);
     const hasRisk = computed(
@@ -294,6 +307,17 @@
             userDialog.value.isInteractOff ||
             userDialog.value.isHideAvatar
     );
+
+    const isTracked = computed(() => {
+        const userId = userDialog.value?.ref?.id;
+        return userId ? trackedNonFriendsStore.isTracked(userId) : false;
+    });
+
+    async function onToggleTrack() {
+        const ref = userDialog.value?.ref;
+        if (!ref?.id) return;
+        await trackedNonFriendsStore.toggleTrackedNonFriend(ref.id, ref.displayName);
+    }
 
     function onCommand(command) {
         props.userDialogCommand(command);

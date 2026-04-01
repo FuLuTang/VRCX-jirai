@@ -60,6 +60,38 @@
                     </VirtualCombobox>
                 </div>
                 <div class="ml-auto flex items-center gap-2">
+                    <div v-if="graphReady" class="mr-4 hidden items-center gap-4 text-xs font-medium text-muted-foreground sm:flex">
+                        <div class="flex items-center gap-1.5">
+                            <div class="size-2 rounded-full" :style="{ backgroundColor: isDarkMode ? '#64748b' : '#94a3b8' }"></div>
+                            <span>{{ t('view.charts.mutual_friend.legend.mutual') }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <div class="size-2 rounded-full" :style="{ backgroundColor: isDarkMode ? '#31543d' : '#dcfce7' }"></div>
+                            <span>{{ t('view.charts.mutual_friend.legend.manual') }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <div class="size-2 rounded-full" :style="{ backgroundColor: isDarkMode ? '#543131' : '#fee2e2' }"></div>
+                            <span>{{ t('view.charts.mutual_friend.legend.non_friend') }}</span>
+                        </div>
+                    </div>
+                    <TooltipWrapper :content="t('view.charts.mutual_friend.manual_relations.button_tooltip')" side="top">
+                        <Button class="rounded-full" size="icon" variant="ghost" @click="isManualRelationsDialogOpen = true">
+                            <LinkIcon />
+                        </Button>
+                    </TooltipWrapper>
+                    <TooltipWrapper
+                        :content="showTrackedNonFriends
+                            ? t('view.charts.mutual_friend.tracked_nonfriend.hide_tooltip')
+                            : t('view.charts.mutual_friend.tracked_nonfriend.show_tooltip')"
+                        side="top">
+                        <Button
+                            class="rounded-full"
+                            size="icon"
+                            :variant="showTrackedNonFriends ? 'secondary' : 'ghost'"
+                            @click="toggleShowTrackedNonFriends">
+                            <UsersIcon />
+                        </Button>
+                    </TooltipWrapper>
                     <Sheet>
                         <SheetTrigger as-child>
                             <div>
@@ -272,6 +304,7 @@
         </div>
         <BackToTop target="#chart" :right="30" :bottom="30" />
     </div>
+    <ManualRelationsDialog v-model:open="isManualRelationsDialogOpen" />
 </template>
 
 <script setup>
@@ -292,8 +325,10 @@
     import {
         Check as CheckIcon,
         EyeOff as EyeOffIcon,
+        Link as LinkIcon,
         RefreshCw as RefreshCwIcon,
         Settings,
+        Users as UsersIcon,
         User as UserIcon
     } from 'lucide-vue-next';
     import { Button } from '@/components/ui/button';
@@ -301,6 +336,7 @@
     import { Slider } from '@/components/ui/slider';
     import { Spinner } from '@/components/ui/spinner';
     import { VirtualCombobox } from '@/components/ui/virtual-combobox';
+    import TooltipWrapper from '@/components/ui/tooltip/TooltipWrapper.vue';
     import { createNodeBorderProgram } from '@sigma/node-border';
     import { storeToRefs } from 'pinia';
     import { toast } from 'vue-sonner';
@@ -326,8 +362,12 @@
     import { showUserDialog } from '../../../coordinators/userCoordinator';
     import { database } from '../../../services/database';
     import { watchState } from '../../../services/watchState';
+    import { useTrackedNonFriendsStore } from '../../../stores/trackedNonFriends';
+    import { useManualRelationsStore } from '../../../stores/manualRelations';
 
     import configRepository from '../../../services/config';
+
+    import ManualRelationsDialog from './ManualRelationsDialog.vue';
 
     const { userImage, userStatusClass } = useUserDisplay();
     const { t } = useI18n();
@@ -336,13 +376,19 @@
     const modalStore = useModalStore();
     const chartsStore = useChartsStore();
     const appearanceStore = useAppearanceSettingsStore();
+    const trackedNonFriendsStore = useTrackedNonFriendsStore();
+    const manualRelationsStore = useManualRelationsStore();
     const { friends } = storeToRefs(friendStore);
     const { currentUser } = storeToRefs(userStore);
     const { isDarkMode } = storeToRefs(appearanceStore);
+    const { trackedSet: trackedNonFriendSet } = storeToRefs(trackedNonFriendsStore);
+    const { relationsList: manualRelationsList } = storeToRefs(manualRelationsStore);
     const cachedUsers = userStore.cachedUsers;
 
     const fetchState = chartsStore.mutualGraphFetchState;
     const status = chartsStore.mutualGraphStatus;
+
+    const isManualRelationsDialogOpen = ref(false);
 
     const MAX_LABEL_NAME_LENGTH = 20;
 
@@ -566,6 +612,7 @@
     const contextMenuNodeId = ref(null);
     const graphMeta = ref(new Map());
     const isRefreshingNode = ref(false);
+    const showTrackedNonFriends = ref(true);
 
     const EXCLUDED_FRIENDS_KEY = 'VRCX_MutualGraphExcludedFriends';
     const excludedFriendIds = useLocalStorage(EXCLUDED_FRIENDS_KEY, []);
@@ -576,6 +623,16 @@
                 await applyGraph(lastMutualMap);
             } catch (err) {
                 console.error('[MutualNetworkGraph] Failed to apply graph after exclude change', err);
+            }
+        }
+    });
+
+    watch(manualRelationsList, async () => {
+        if (lastMutualMap) {
+            try {
+                await applyGraph(lastMutualMap);
+            } catch (err) {
+                console.error('[MutualNetworkGraph] Failed to apply graph after manual-relations change', err);
             }
         }
     });
@@ -887,6 +944,27 @@
             }
         }
 
+        // Inject manual-relation edges (may introduce nodes not in mutualMap)
+        for (const rel of manualRelationsList.value) {
+            const { userIdA, userIdB } = rel;
+            if (!userIdA || !userIdB) continue;
+            const refA = cachedUsers.get(userIdA);
+            const refB = cachedUsers.get(userIdB);
+            ensureNode(userIdA, refA?.displayName || userIdA);
+            ensureNode(userIdB, refB?.displayName || userIdB);
+            if (!excludeSet.has(userIdA) && !excludeSet.has(userIdB)) {
+                const [a, b] = [userIdA, userIdB].sort();
+                const key = `${a}__${b}`;
+                if (!graph.hasEdge(key)) {
+                    graph.addEdgeWithKey(key, a, b, { size: 0.75, manualRelation: true });
+                    nodeDegree.set(a, (nodeDegree.get(a) || 0) + 1);
+                    nodeDegree.set(b, (nodeDegree.get(b) || 0) + 1);
+                } else {
+                    graph.setEdgeAttribute(key, 'manualRelation', true);
+                }
+            }
+        }
+
         const nodeIds = graph.nodes();
         const maxDegree = nodeIds.reduce((max, id) => Math.max(max, nodeDegree.get(id) || 0), 0);
 
@@ -894,7 +972,13 @@
             const degree = nodeDegree.get(id) || 0;
             const size = 4 + (maxDegree ? (degree / maxDegree) * 18 : 0);
             const label = truncateLabelText(nodeNames.get(id) || id);
-            const attrs = { label, size, type: 'border' };
+            const isFriend = friends.value?.has ? friends.value.has(id) : false;
+            const attrs = {
+                label,
+                size,
+                type: 'border',
+                trackedNonFriend: !isFriend && trackedNonFriendSet.value.has(id)
+            };
             if (meta?.has(id)) {
                 const m = meta.get(id);
                 attrs.optedOut = m.optedOut;
@@ -930,8 +1014,12 @@
         const DEFAULT_LABEL_THRESHOLD = 10;
 
         const labelColor = isDarkMode.value ? '#e2e8f0' : '#111827';
-        const EDGE_BASE = isDarkMode.value ? '#334155' : '#94a3b8';
-        const EDGE_ACTIVE = isDarkMode.value ? '#bac1c9' : '#0f172a';
+        
+        // Simple dark/light logic - works well for both Dark and Midnight
+        const EDGE_BASE = isDarkMode.value ? '#64748b' : '#94a3b8'; // Regular mutual (Friend-Friend)
+        const EDGE_ACTIVE = isDarkMode.value ? '#facc15' : '#0f172a'; // Active focus (Yellow in dark mode)
+        const EDGE_MANUAL = isDarkMode.value ? '#31543d' : '#dcfce7'; // Darker Greenish / Light Greenish
+        const EDGE_NONFRIEND = isDarkMode.value ? '#543131' : '#fee2e2'; // Darker Reddish / Light Reddish
 
         let cameraState = null;
 
@@ -1034,12 +1122,26 @@
         sigmaInstance.setSetting('nodeReducer', (node, data) => {
             const res = { ...data };
 
+            // Hide tracked non-friends when toggle is off
+            if (data.trackedNonFriend && !showTrackedNonFriends.value) {
+                res.hidden = true;
+                return res;
+            }
+
             if (data.optedOut) {
                 res.borderColor = '#9ca3af';
             }
 
+            // Non-friends: grey
+            if (data.trackedNonFriend) {
+                res.color = '#9ca3af';
+                res.labelColor = '#9ca3af';
+            }
+
             if (!hovered) {
-                res.color = data.optedOut ? '#d1d5db' : data.color;
+                if (!data.trackedNonFriend) {
+                    res.color = data.optedOut ? '#d1d5db' : data.color;
+                }
                 res.zIndex = 1;
                 return res;
             }
@@ -1074,21 +1176,32 @@
 
         sigmaInstance.setSetting('edgeReducer', (edge, data) => {
             const res = { ...data };
+            const isManual = data.manualRelation === true;
+            const extremities = graph.extremities(edge);
+            // Any edge connected to at least one non-friend node
+            const isNonFriendEdge = extremities.some(n => graph.getNodeAttribute(n, 'trackedNonFriend'));
 
             if (!hovered) {
                 res.hidden = false;
-                res.color = EDGE_BASE;
-                res.size = data.size || 1;
+                if (isNonFriendEdge) {
+                    res.color = EDGE_NONFRIEND;
+                    res.size = 0.6;
+                } else if (isManual) {
+                    res.color = EDGE_MANUAL;
+                    res.size = 0.6;
+                } else {
+                    res.color = EDGE_BASE;
+                    res.size = data.size || 1;
+                }
                 return res;
             }
 
-            const [s, t] = graph.extremities(edge);
-            const active = s === hovered || t === hovered;
+            const active = extremities.includes(hovered);
 
             if (active) {
                 res.hidden = false;
                 res.color = EDGE_ACTIVE;
-                res.size = data.size || 1;
+                res.size = isNonFriendEdge || isManual ? 1.2 : 2.0;
                 return res;
             }
 
@@ -1330,5 +1443,13 @@
         } finally {
             isRefreshingNode.value = false;
         }
+    }
+
+    /**
+     * Toggle visibility of tracked non-friends in the graph.
+     */
+    function toggleShowTrackedNonFriends() {
+        showTrackedNonFriends.value = !showTrackedNonFriends.value;
+        sigmaInstance?.refresh();
     }
 </script>

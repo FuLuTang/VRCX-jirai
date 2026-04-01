@@ -8,6 +8,7 @@ import { createRateLimiter, executeWithBackoff } from '../shared/utils';
 import { database } from '../services/database';
 import { useFriendStore } from './friend';
 import { useUserStore } from './user';
+import { useTrackedNonFriendsStore } from './trackedNonFriends';
 import { userRequest } from '../api';
 
 function createDefaultFetchState() {
@@ -32,6 +33,7 @@ function isValidMutualIdentifier(value) {
 export const useChartsStore = defineStore('Charts', () => {
     const friendStore = useFriendStore();
     const userStore = useUserStore();
+    const trackedNonFriendsStore = useTrackedNonFriendsStore();
 
     const { t } = useI18n();
 
@@ -213,6 +215,9 @@ export const useChartsStore = defineStore('Charts', () => {
             await database.upsertMutualGraphMeta(friendId, {
                 optedOut: false
             });
+            // Also persist to _OLD tables so the data survives restarts
+            await database.updateMutualsForFriendInOld(friendId, mutualIds);
+            await database.updateFriendFetchTimeInOld(friendId);
 
             return { success: true, mutuals, optedOut: false };
         } catch (err) {
@@ -305,6 +310,48 @@ export const useChartsStore = defineStore('Charts', () => {
                 if (mutualGraphStatus.cancelRequested) {
                     cancelled = true;
                     break;
+                }
+            }
+
+            // Also fetch mutuals for tracked non-friends (silently skip on 403/404)
+            if (!cancelled) {
+                const trackedIds = Array.from(trackedNonFriendsStore.trackedSet);
+                for (const trackedId of trackedIds) {
+                    if (isCancelled()) {
+                        cancelled = true;
+                        break;
+                    }
+                    // Skip if already in mutualMap (i.e. also a friend)
+                    if (mutualMap.has(trackedId)) continue;
+                    try {
+                        if (rateLimiter) await rateLimiter.wait();
+                        const mutuals = await fetchMutualFriendsForUser(trackedId, {
+                            rateLimiter,
+                            isCancelled
+                        });
+                        if (isCancelled()) {
+                            cancelled = true;
+                            break;
+                        }
+                        mutualMap.set(trackedId, { friend: { id: trackedId }, mutuals });
+                        metaEntries.set(trackedId, { optedOut: false });
+                    } catch (err) {
+                        if ((err?.message || '') === 'cancelled' || isCancelled()) {
+                            cancelled = true;
+                            break;
+                        }
+                        // 403/404 is expected for private/locked accounts
+                        const status = err?.status;
+                        if (status === 403 || status === 404) {
+                            metaEntries.set(trackedId, { optedOut: true });
+                        } else {
+                            console.warn(
+                                '[MutualNetworkGraph] Skipping tracked non-friend due to fetch error',
+                                trackedId,
+                                err
+                            );
+                        }
+                    }
                 }
             }
 

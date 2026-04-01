@@ -223,10 +223,6 @@
     const isSheetOpen = ref(false);
     const selectedWorld = ref(null);
 
-    const containerResizeObserver = new ResizeObserver(() => {
-        setContainerHeight();
-    });
-
     const displayed = computed(() => hotWorlds.value.slice(0, 20));
 
     const columns = computed(() => {
@@ -254,14 +250,6 @@
 
     function getBarWidth(uniqueFriends) {
         return `${Math.max(4, (uniqueFriends / maxFriends.value) * 100)}%`;
-    }
-
-    function setContainerHeight() {
-        if (hotWorldsRef.value) {
-            const availableHeight = window.innerHeight - 110;
-            hotWorldsRef.value.style.height = `${availableHeight}px`;
-            hotWorldsRef.value.style.overflowY = 'auto';
-        }
     }
 
     function handleDaysChange(value) {
@@ -316,16 +304,6 @@
     }
 
     onMounted(() => {
-        if (hotWorldsRef.value) {
-            containerResizeObserver.observe(hotWorldsRef.value);
-        }
-        setContainerHeight();
         loadData();
-    });
-
-    onBeforeUnmount(() => {
-        if (hotWorldsRef.value) {
-            containerResizeObserver.unobserve(hotWorldsRef.value);
-        }
     });
 </script>

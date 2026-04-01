@@ -287,6 +287,10 @@
                 <span>{{ t('side_panel.groups') }}</span>
                 <span class="sidebar-tab-count"> ({{ groupInstances.length }}) </span>
             </template>
+            <template #label-tracked>
+                <span>{{ t('side_panel.tracked_nonfriends.tab_label') }}</span>
+                <span class="sidebar-tab-count"> ({{ trackedNonFriendsList.length }}) </span>
+            </template>
             <template #friends>
                 <div class="h-full overflow-hidden">
                     <FriendsSidebar />
@@ -295,6 +299,11 @@
             <template #groups>
                 <div class="h-full overflow-hidden">
                     <GroupsSidebar />
+                </div>
+            </template>
+            <template #tracked>
+                <div class="h-full overflow-hidden">
+                    <TrackedNonFriendsSidebar />
                 </div>
             </template>
         </TabsUnderline>
@@ -342,12 +351,14 @@
     import { runRefreshFriendsListFlow } from '../../coordinators/friendSyncCoordinator';
     import { normalizeFavoriteGroupsChange, resolveFavoriteGroups } from './sidebarSettingsUtils';
     import { useQuickSearchStore } from '../../stores/quickSearch';
+    import { useTrackedNonFriendsStore } from '../../stores/trackedNonFriends';
 
     import FriendsSidebar from './components/FriendsSidebar.vue';
     import QuickSearchDialog from '../../components/QuickSearchDialog.vue';
     import FavoriteFriendGroupOrderDialog from './components/FavoriteFriendGroupOrderDialog.vue';
     import GroupsSidebar from './components/GroupsSidebar.vue';
     import NotificationCenterSheet from './components/NotificationCenterSheet.vue';
+    import TrackedNonFriendsSidebar from './components/TrackedNonFriendsSidebar.vue';
 
     const { friends, isRefreshFriendsLoading, onlineFriendCount } = storeToRefs(useFriendStore());
     const { groupInstances } = storeToRefs(useGroupStore());
@@ -355,6 +366,8 @@
     const { isNotificationCenterOpen, hasUnseenNotifications } = storeToRefs(notificationStore);
     const { notificationLayout } = storeToRefs(useNotificationsSettingsStore());
     const quickSearchStore = useQuickSearchStore();
+    const trackedNonFriendsStore = useTrackedNonFriendsStore();
+    const { trackedList: trackedNonFriendsList } = storeToRefs(trackedNonFriendsStore);
     const { t } = useI18n();
 
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -447,7 +460,8 @@
 
     const sidebarTabs = computed(() => [
         { value: 'friends', label: t('side_panel.friends') },
-        { value: 'groups', label: t('side_panel.groups') }
+        { value: 'groups', label: t('side_panel.groups') },
+        { value: 'tracked', label: t('side_panel.tracked_nonfriends.tab_label') }
     ]);
 </script>
 

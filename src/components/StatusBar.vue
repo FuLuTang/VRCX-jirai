@@ -248,7 +248,7 @@
                         </TooltipWrapper>
 
                         <TooltipWrapper
-                            v-if="visibility.infoFetch"
+                            v-if="visibility.profileInfoSync"
                             :content="infoFetchTooltip"
                             side="top">
                             <div
@@ -276,7 +276,7 @@
                                 <span
                                     v-else
                                     class="inline-block size-2 rounded-full shrink-0 bg-status-offline-alt" />
-                                <span class="text-[10px] text-foreground">同步</span>
+                                <span class="text-[10px] text-foreground">{{ t('status_bar.info_sync') }}</span>
                                 <span
                                     v-if="infoFetchState.status === 'running'"
                                     class="text-[10px] text-foreground">
@@ -329,10 +329,10 @@
                     WebSocket
                 </ContextMenuCheckboxItem>
                 <ContextMenuCheckboxItem
-                    :model-value="visibility.infoFetch"
+                    :model-value="visibility.profileInfoSync"
                     @select.prevent
-                    @update:model-value="toggleVisibility('infoFetch')">
-                    信息同步
+                    @update:model-value="toggleVisibility('profileInfoSync')">
+                    {{ t('view.tools.system_tools.info_completion') }}
                 </ContextMenuCheckboxItem>
                 <ContextMenuCheckboxItem
                     :model-value="visibility.uptime"
@@ -596,12 +596,20 @@
 
     const infoFetchTooltip = computed(() => {
         if (infoFetchState.status === 'running') {
-            return `信息同步中 ${infoFetchState.done}/${infoFetchState.total}（Bio +${infoFetchState.bioUpdated}，Status +${infoFetchState.statusUpdated}）`;
+            return t('view.tools.system_tools.info_completion_tooltip_running', {
+                done: infoFetchState.done,
+                total: infoFetchState.total,
+                bio: infoFetchState.bioUpdated,
+                status: infoFetchState.statusUpdated
+            });
         }
         if (infoFetchState.status === 'done') {
-            return `同步完成：Bio 更新 ${infoFetchState.bioUpdated} 条，Status 更新 ${infoFetchState.statusUpdated} 条（点击重新同步）`;
+            return t('view.tools.system_tools.info_completion_tooltip_done', {
+                bio: infoFetchState.bioUpdated,
+                status: infoFetchState.statusUpdated
+            });
         }
-        return '信息同步（点击开始）';
+        return t('view.tools.system_tools.info_completion_tooltip_idle');
     });
 
     const appUptimeText = computed(() => {

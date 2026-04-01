@@ -84,7 +84,19 @@
         "online": "在线",
         "active": "活跃中（仅登录网页端）",
         "offline": "离线",
-        "pending_offline": "可能离线"
+        "pending_offline": "可能离线",
+        "tracked_nonfriends": {
+            "tab_label": "追踪非好友",
+            "empty": "还没有追踪任何非好友。点击「+」可通过用户ID添加，或在任意玩家的个人资料中使用「⋯」菜单开启追踪。",
+            "remove_tooltip": "取消追踪",
+            "add_button": "添加 +",
+            "add_dialog_title": "追踪玩家",
+            "add_dialog_hint": "手动输入用户ID（usr_xxx...），或在VRCX-jirai中点击任意玩家，通过右侧「⋯」按钮选择「追踪」。",
+            "add_input_placeholder": "usr_xxx...",
+            "add_verify_error": "无法获取该用户数据，请检查ID后重试。",
+            "add_confirm_question": "是否为用户「{name}」？",
+            "add_back": "返回"
+        }
     },
     "view": {
         "login": {
@@ -406,6 +418,51 @@
                     "layout_spacing_help": "好友节点的分布范围。数值越高，关系网内的节点距离越远。",
                     "edge_curvature": "连接线曲率",
                     "edge_curvature_help": "连接线的弯曲程度。数值越高，密集区域的线条越平滑。"
+                },
+                "tracked_nonfriend": {
+                    "track_tooltip": "追踪此非好友",
+                    "untrack_tooltip": "取消追踪此非好友",
+                    "track_hint": "请先在关系网中右键点击一个节点",
+                    "added": "已追踪 {name}",
+                    "removed": "已取消追踪 {name}",
+                    "show_tooltip": "在关系网中显示追踪的非好友",
+                    "hide_tooltip": "在关系网中隐藏追踪的非好友"
+                },
+                "context_menu": {
+                    "view_details": "查看详情",
+                    "hide_friend": "从关系网中隐藏",
+                    "refresh_mutuals": "刷新共同好友",
+                    "confirm_non_friend_title": "非好友用户",
+                    "confirm_non_friend_message": "此用户已不再是你的好友，仍要拉取其共同好友数据吗？",
+                    "refresh_success": "已更新 {name} 的共同好友数据",
+                    "user_opted_out": "此用户已关闭共同好友功能，现有数据已保留",
+                    "refresh_error": "刷新共同好友数据失败",
+                    "last_fetched": "上次拉取时间"
+                },
+                "manual_relations": {
+                    "button_tooltip": "手动判定好友关系",
+                    "dialog_title": "手动好友关系管理",
+                    "tab_list": "已添加关系",
+                    "tab_add": "添加关系",
+                    "tab_suggest": "推荐配对",
+                    "list_empty": "还没有手动添加任何好友关系。",
+                    "user_a": "用户 A",
+                    "user_b": "用户 B",
+                    "user_placeholder": "选择一个用户...",
+                    "user_search": "搜索好友...",
+                    "add_button": "添加联系",
+                    "already_exists": "该关系已存在。",
+                    "suggest_description": "根据共同好友数据，以下配对可能存在尚未记录的好友关系。",
+                    "suggest_button": "开始分析",
+                    "suggest_score": "评分: {score}",
+                    "suggest_confirm": "添加",
+                    "suggest_dismiss": "跳过",
+                    "suggest_none": "没有找到推荐配对，请先抓取共同好友数据。",
+                    "legend": {
+                        "mutual": "共同好友关系",
+                        "manual": "手动添加关系",
+                        "non_friend": "包含非好友"
+                    }
                 }
             },
             "hot_worlds": {
@@ -531,15 +588,18 @@
                 "launch_options_description": "编辑 VRChat 的启动选项",
                 "registry_backup": "VRChat 设置数据备份工具",
                 "registry_backup_description": "创建或恢复 VRChat 的设置备份",
-                "bio_fetch": "信息抓取补全",
-                "bio_fetch_description": "扫描所有好友缓存中的简介，将新增或变更的简介保存到数据库",
-                "bio_fetch_hint": "准备好扫描 {count} 位好友。",
-                "bio_fetch_start": "开始抓取",
-                "bio_fetch_again": "再次抓取",
-                "bio_fetch_cancel": "取消",
-                "bio_fetch_close": "关闭",
-                "bio_fetch_progress": "正在扫描 {current} / {total}...",
-                "bio_fetch_done": "完成 — 共保存了 {total} 位好友中 {updated} 条新增/变更的简介。"
+                "info_completion": "信息抓取补全",
+                "info_completion_description": "扫描所有好友与追踪非好友的资料，将新增或变更的简介及状态保存到数据库",
+                "info_completion_hint": "准备好扫描 {count} 个目标。",
+                "info_completion_start": "开始抓取",
+                "info_completion_again": "再次抓取",
+                "info_completion_cancel": "取消",
+                "info_completion_close": "关闭",
+                "info_completion_progress": "正在扫描 {current} / {total}...",
+                "info_completion_done": "完成 — 共保存了 {total} 个目标中 {updated} 条新增/变更的信息。",
+                "info_completion_tooltip_running": "信息同步中 {done}/{total} (Bio +{bio}, Status +{status})",
+                "info_completion_tooltip_done": "同步完成：Bio 更新 {bio} 条, Status 更新 {status} 条 (点击重新同步)",
+                "info_completion_tooltip_idle": "信息同步 (点击开始)"
             },
             "other": {
                 "header": "其它",
@@ -1086,7 +1146,9 @@
                 "unfriend": "删除好友",
                 "unfriend_success_msg": "已成功删除好友",
                 "logout": "退出登录",
-                "edit_note_memo": "编辑备注"
+                "edit_note_memo": "编辑备注",
+                "track_stranger": "开启陌生人追踪",
+                "untrack_stranger": "关闭陌生人追踪"
             },
             "info": {
                 "header": "信息",
@@ -2538,5 +2600,8 @@
                 "unavailable": "服务可能由于 VRChat 内部问题而不可用"
             }
         }
+    },
+    "status_bar": {
+        "info_sync": "同步"
     }
 }

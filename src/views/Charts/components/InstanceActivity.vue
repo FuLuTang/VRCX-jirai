@@ -221,34 +221,6 @@
 
     const instanceActivityRef = ref(null);
 
-    const instanceActivityResizeObserver = new ResizeObserver(() => {
-        setInstanceActivityHeight();
-    });
-
-    /**
-     *
-     */
-    function setInstanceActivityHeight() {
-        if (instanceActivityRef.value) {
-            const availableHeight = window.innerHeight - 110;
-            instanceActivityRef.value.style.height = `${availableHeight}px`;
-            instanceActivityRef.value.style.overflowY = 'auto';
-        }
-    }
-
-    onMounted(() => {
-        if (instanceActivityRef.value) {
-            instanceActivityResizeObserver.observe(instanceActivityRef.value);
-        }
-        setInstanceActivityHeight();
-    });
-
-    onBeforeUnmount(() => {
-        if (instanceActivityRef.value) {
-            instanceActivityResizeObserver.unobserve(instanceActivityRef.value);
-        }
-    });
-
     const {
         barWidth,
         isDetailVisible,
