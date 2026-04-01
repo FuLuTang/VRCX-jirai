@@ -428,10 +428,11 @@ export function showUserDialog(userId) {
         });
     }
     AppApi.SendIpc('ShowUserDialog', userId);
-    // Capture cached bio before the API fetch so we can detect whether
+    // Capture cached bio and status before the API fetch so we can detect whether
     // applyUser (called inside the fetch) already triggered
-    // runHandleUserUpdateFlow to record the same bio change.
+    // runHandleUserUpdateFlow to record the same change.
     const bioBefore = userStore.cachedUsers.get(userId)?.bio;
+    const statusBefore = userStore.cachedUsers.get(userId)?.status;
     queryRequest
         .fetch('user', {
             userId
@@ -483,6 +484,43 @@ export function showUserDialog(userId) {
                             }
                         }).catch((err) => {
                             console.error('Failed to record bio snapshot:', err);
+                        });
+                    }
+                }
+
+                // Record status snapshot for any user (friend or stranger) when
+                // their profile is viewed, skipping if status hasn't changed.
+                // Also skip when runHandleUserUpdateFlow already recorded this
+                // exact status change: that path fires for friends whenever
+                // status transitions between two non-offline values.
+                if (userId !== currentUser.id && D.ref.status !== undefined) {
+                    const currentStatus = D.ref.status || '';
+                    const currentStatusDesc = D.ref.statusDescription || '';
+                    const isFriend = friendStore.friends.has(userId);
+                    const validStatuses = ['join me', 'active', 'ask me', 'busy'];
+                    // runHandleUserUpdateFlow records the status change for
+                    // friends when both old and new status are non-offline.
+                    const eventFlowWillRecordStatus =
+                        isFriend &&
+                        statusBefore !== undefined &&
+                        statusBefore !== currentStatus &&
+                        currentStatus !== 'offline' &&
+                        (statusBefore || '') !== 'offline';
+                    if (!eventFlowWillRecordStatus && validStatuses.includes(currentStatus)) {
+                        database.getLastStatusChangeForUser(userId).then((last) => {
+                            if (!last || last.status !== currentStatus) {
+                                database.addStatusToDatabase({
+                                    created_at: new Date().toJSON(),
+                                    userId,
+                                    displayName: D.ref.displayName,
+                                    status: currentStatus,
+                                    statusDescription: currentStatusDesc,
+                                    previousStatus: last ? last.status : '',
+                                    previousStatusDescription: last ? last.statusDescription : ''
+                                });
+                            }
+                        }).catch((err) => {
+                            console.error('Failed to record status snapshot:', err);
                         });
                     }
                 }
