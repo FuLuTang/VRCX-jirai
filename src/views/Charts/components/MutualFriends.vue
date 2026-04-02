@@ -259,9 +259,11 @@
                     <div
                         v-if="isFetching"
                         class="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] items-center rounded-md bg-transparent p-3 w-70">
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="mr-1">{{ t('view.charts.mutual_friend.progress.friends_processed') }}</span>
-                            <strong>{{ fetchState.processedFriends }} / {{ totalFriends }}</strong>
+                        <div class="flex flex-col text-sm mb-1">
+                            <div class="flex justify-between">
+                                <span class="mr-1">{{ progressLabel }}</span>
+                                <strong>{{ fetchState.processedFriends }} + {{ fetchState.processedTrackedNonFriends }} / {{ totalFriends }} + {{ fetchState.totalTrackedNonFriends || 0 }}</strong>
+                            </div>
                         </div>
                         <Progress :model-value="progressPercent" class="h-3" />
                     </div>
@@ -601,9 +603,14 @@
             ? t('view.charts.mutual_friend.actions.fetch_again')
             : t('view.charts.mutual_friend.actions.start_fetch')
     );
+    const totalProgressCount = computed(() => totalFriends.value + (fetchState.totalTrackedNonFriends || 0));
+    const currentProgressCount = computed(() => fetchState.processedFriends + (fetchState.processedTrackedNonFriends || 0));
     const progressPercent = computed(() =>
-        totalFriends.value ? Math.min(100, Math.round((fetchState.processedFriends / totalFriends.value) * 100)) : 0
+        totalProgressCount.value ? Math.min(100, Math.round((currentProgressCount.value / totalProgressCount.value) * 100)) : 0
     );
+    const progressLabel = computed(() => {
+        return t('view.charts.mutual_friend.status.fetching_graph');
+    });
 
     const canvasBackground = computed(() => 'transparent');
 
@@ -932,7 +939,7 @@
 
         for (const [friendId, { friend, mutuals }] of mutualMap.entries()) {
             const friendRef = friend?.ref || cachedUsers.get(friendId);
-            const friendName = friendRef?.displayName;
+            const friendName = friend?.displayName || friendRef?.displayName;
             ensureNode(friendId, friendName || friendId);
 
             for (const mutual of mutuals) {
@@ -1295,19 +1302,32 @@
             }
 
             const mutualMap = new Map();
+            let loadedTrackedCount = 0;
             snapshot.forEach((mutualIds, friendId) => {
                 if (!friendId) return;
                 const friendEntry = friends.value?.get ? friends.value.get(friendId) : undefined;
                 const fallbackRef = friendEntry?.ref || cachedUsers.get(friendId);
+                const isTracked = trackedNonFriendSet.value.has(friendId);
+                
+                let displayName = null;
+                if (isTracked) {
+                    const trackedEntry = trackedNonFriendsStore.trackedList.find(t => t.userId === friendId);
+                    displayName = trackedEntry?.displayName;
+                    loadedTrackedCount++;
+                }
 
                 let normalizedMutuals = Array.isArray(mutualIds) ? mutualIds : [];
                 normalizedMutuals = normalizedMutuals.filter((id) => id != 'usr_00000000-0000-0000-0000-000000000000');
 
                 mutualMap.set(friendId, {
-                    friend: friendEntry || (fallbackRef ? { id: friendId, ref: fallbackRef } : { id: friendId }),
+                    friend: friendEntry || (fallbackRef ? { id: friendId, ref: fallbackRef } : { id: friendId, displayName }),
                     mutuals: normalizedMutuals.map((id) => ({ id }))
                 });
             });
+
+            if (loadedTrackedCount > 0) {
+                console.log(`[MutualNetworkGraph] Loaded snapshot with ${loadedTrackedCount} tracked non-friends`);
+            }
 
             if (!mutualMap.size) {
                 await promptInitialFetch();
