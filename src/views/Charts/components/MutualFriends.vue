@@ -262,7 +262,7 @@
                         <div class="flex flex-col text-sm mb-1">
                             <div class="flex justify-between">
                                 <span class="mr-1">{{ progressLabel }}</span>
-                                <strong>{{ fetchState.processedFriends }} + {{ fetchState.processedTrackedNonFriends }} / {{ totalFriends }} + {{ fetchState.totalTrackedNonFriends || 0 }}</strong>
+                                <strong>{{ currentProgressCount }} / {{ totalFriends }}+{{ fetchState.totalTrackedNonFriends || 0 }}</strong>
                             </div>
                         </div>
                         <Progress :model-value="progressPercent" class="h-3" />
@@ -609,7 +609,7 @@
         totalProgressCount.value ? Math.min(100, Math.round((currentProgressCount.value / totalProgressCount.value) * 100)) : 0
     );
     const progressLabel = computed(() => {
-        return t('view.charts.mutual_friend.status.fetching_graph');
+        return "正在拉取共同好友关系网...";
     });
 
     const canvasBackground = computed(() => 'transparent');

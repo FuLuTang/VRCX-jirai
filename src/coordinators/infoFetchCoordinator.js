@@ -12,6 +12,8 @@ export const infoFetchState = reactive({
     status: 'idle',
     done: 0,
     total: 0,
+    friendsTotal: 0,
+    trackedTotal: 0,
     bioUpdated: 0,
     statusUpdated: 0
 });
@@ -32,15 +34,22 @@ export function cancelInfoFetch() {
 export function getTargetCount() {
     const friendStore = useFriendStore();
     const trackedStore = useTrackedNonFriendsStore();
-    const seenIds = new Set();
+    const seenIdsForFriends = new Set();
+    const seenIdsForTracked = new Set();
 
     for (const ctx of friendStore.friends.values()) {
-        seenIds.add(ctx.id);
+        seenIdsForFriends.add(ctx.id);
     }
     for (const item of trackedStore.trackedList) {
-        seenIds.add(item.userId);
+        if (!seenIdsForFriends.has(item.userId)) {
+            seenIdsForTracked.add(item.userId);
+        }
     }
-    return seenIds.size;
+    return {
+        friends: seenIdsForFriends.size,
+        tracked: seenIdsForTracked.size,
+        total: seenIdsForFriends.size + seenIdsForTracked.size
+    };
 }
 
 /**
@@ -84,7 +93,10 @@ export async function runSilentInfoFetch() {
     infoFetchState.statusUpdated = 0;
 
     const targets = buildTargetList();
+    const counts = getTargetCount();
     infoFetchState.total = targets.length;
+    infoFetchState.friendsTotal = counts.friends;
+    infoFetchState.trackedTotal = counts.tracked;
 
     if (targets.length === 0) {
         infoFetchState.status = 'done';

@@ -11,7 +11,12 @@
             <div class="space-y-6 py-4">
                 <div class="flex items-center justify-between text-sm">
                     <div class="text-muted-foreground">
-                        {{ t('view.tools.system_tools.info_completion_hint', { count: targetCount }) }}
+                        <template v-if="!isRunning && !isDone">
+                            准备好扫描 {{ totalTarget.friends }}+{{ totalTarget.tracked }} 个目标。
+                        </template>
+                        <template v-else>
+                            本次扫描共计 {{ state.friendsTotal }}+{{ state.trackedTotal }} 个目标。
+                        </template>
                     </div>
                     <div v-if="isRunning || isDone" class="flex gap-4">
                         <div class="flex flex-col items-end">
@@ -33,8 +38,8 @@
                                 <span class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse delay-75"></span>
                                 <span class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse delay-150"></span>
                             </div>
-                            <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                <template v-if="isRunning">正在处理 {{ state.done }} / {{ state.total }}</template>
+                             <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                <template v-if="isRunning">正在处理 {{ state.done }} / {{ state.friendsTotal }}+{{ state.trackedTotal }}</template>
                                 <template v-else-if="isDone">同步任务已完成</template>
                                 <template v-else>准备就绪</template>
                             </span>
@@ -111,7 +116,7 @@
     const isRunning = computed(() => state.status === 'running');
     const isDone = computed(() => state.status === 'done');
 
-    const targetCount = computed(() => getTargetCount());
+    const totalTarget = computed(() => getTargetCount());
 
     const progressPercent = computed(() => {
         if (state.total === 0) return 0;
