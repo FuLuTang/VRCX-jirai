@@ -1,5 +1,18 @@
 <template>
-    <div class="gallery-page x-container">
+    <div
+        class="gallery-page x-container"
+        @dragenter.prevent="onDragEnter"
+        @dragover.prevent="onDragOver"
+        @dragleave="onDragLeave"
+        @drop.prevent="onDrop">
+        <div
+            v-if="isDraggingOver && currentTab in tabUploadHandlers"
+            class="absolute inset-0 z-50 flex items-center justify-center rounded-[var(--radius)] border-2 border-dashed border-primary bg-background/80 backdrop-blur-sm pointer-events-none">
+            <div class="flex flex-col items-center gap-3 text-primary">
+                <Upload class="size-12" />
+                <span class="text-lg font-semibold">{{ t('dialog.gallery_icons.drop_to_add') }}</span>
+            </div>
+        </div>
         <div class="flex items-center gap-2 ml-2">
             <Button variant="ghost" size="sm" class="mr-3" @click="goBack">
                 <ArrowLeft />
@@ -7,7 +20,7 @@
             </Button>
             <span class="header">{{ t('dialog.gallery_icons.header') }}</span>
         </div>
-        <TabsUnderline default-value="gallery" :items="galleryTabs" :unmount-on-hide="false">
+        <TabsUnderline v-model="currentTab" default-value="gallery" :items="galleryTabs" :unmount-on-hide="false">
             <template #label-gallery>
                 <span>
                     {{ t('dialog.gallery_icons.gallery') }}
@@ -692,6 +705,10 @@
     const pendingUploads = ref(0);
     const isUploading = computed(() => pendingUploads.value > 0);
 
+    const currentTab = ref('gallery');
+    const isDraggingOver = ref(false);
+    let _dragEnterCount = 0;
+
     const cropDialogOpen = ref(false);
     const cropDialogTitle = ref('');
     const cropDialogAspectRatio = ref(4 / 3);
@@ -1193,5 +1210,52 @@
                 }
             })
             .catch(() => {});
+    }
+
+    const tabUploadHandlers = {
+        gallery: onFileChangeGallery,
+        icons: onFileChangeVRCPlusIcon,
+        emojis: onFileChangeEmoji,
+        stickers: onFileChangeSticker,
+        prints: onFileChangePrint
+    };
+
+    /**
+     * @param {DragEvent} e
+     */
+    function onDragEnter(e) {
+        if (!e.dataTransfer?.types?.includes('Files')) return;
+        _dragEnterCount++;
+        isDraggingOver.value = true;
+    }
+
+    /**
+     * @param {DragEvent} e
+     */
+    function onDragOver(e) {
+        if (!e.dataTransfer?.types?.includes('Files')) return;
+        e.dataTransfer.dropEffect = 'copy';
+    }
+
+    /**
+     */
+    function onDragLeave() {
+        _dragEnterCount--;
+        if (_dragEnterCount <= 0) {
+            _dragEnterCount = 0;
+            isDraggingOver.value = false;
+        }
+    }
+
+    /**
+     * @param {DragEvent} e
+     */
+    function onDrop(e) {
+        _dragEnterCount = 0;
+        isDraggingOver.value = false;
+        const handler = tabUploadHandlers[currentTab.value];
+        if (!handler) return;
+        if (!e.dataTransfer?.files?.length) return;
+        handler(e);
     }
 </script>

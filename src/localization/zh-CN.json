@@ -1805,7 +1805,8 @@
             "drone_skin": "无人机皮肤",
             "emoji": "Emoji（表情）",
             "redeem": "兑换码兑换",
-            "create_animated_emoji": "动画表情生成器"
+            "create_animated_emoji": "动画表情生成器",
+            "drop_to_add": "松手以添加"
         },
         "gallery_select": {
             "header": "选择图片",

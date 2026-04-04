@@ -2162,7 +2162,8 @@
             "emoji": "Emoji",
             "redeem": "Redeem",
             "create_animated_emoji": "Animated Emoji Generator",
-            "crop_image": "Confirm Upload"
+            "crop_image": "Confirm Upload",
+            "drop_to_add": "Release to add"
         },
         "image_crop": {
             "rotate_left": "Rotate Left",
