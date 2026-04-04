@@ -707,7 +707,7 @@
 
     const currentTab = ref('gallery');
     const isDraggingOver = ref(false);
-    let _dragEnterCount = 0;
+    let dragEnterCount = 0;
 
     const cropDialogOpen = ref(false);
     const cropDialogTitle = ref('');
@@ -1225,7 +1225,7 @@
      */
     function onDragEnter(e) {
         if (!e.dataTransfer?.types?.includes('Files')) return;
-        _dragEnterCount++;
+        dragEnterCount++;
         isDraggingOver.value = true;
     }
 
@@ -1238,11 +1238,12 @@
     }
 
     /**
+     * Decrements the drag enter counter; hides the overlay when the drag leaves the container.
      */
     function onDragLeave() {
-        _dragEnterCount--;
-        if (_dragEnterCount <= 0) {
-            _dragEnterCount = 0;
+        dragEnterCount--;
+        if (dragEnterCount <= 0) {
+            dragEnterCount = 0;
             isDraggingOver.value = false;
         }
     }
@@ -1251,7 +1252,7 @@
      * @param {DragEvent} e
      */
     function onDrop(e) {
-        _dragEnterCount = 0;
+        dragEnterCount = 0;
         isDraggingOver.value = false;
         const handler = tabUploadHandlers[currentTab.value];
         if (!handler) return;
