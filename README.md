@@ -1,15 +1,16 @@
 <div align="center">
 
-# <img src="./images/VRCX.png" width="64" height="64"> VRCX-地雷Edition
+# <img src="./images/VRCX.png" width="64" height="64"> VRCX 优化版 - 地雷Edition
 
 [![GitHub Workflow Status](https://github.com/FuLuTang/VRCX-jirai/actions/workflows/github_actions.yml/badge.svg)](https://github.com/FuLuTang/VRCX-jirai/actions/workflows/github_actions.yml)
 
-### **专为地雷人打造的视奸神器**
+### **专为"地雷人"打造的视奸神器**
 
 </div>
 
-这是 [VRCX](https://github.com/vrcx-team/VRCX) 的魔改分支。原版 VRCX 已经很好用了，但要想成为一名合格的 **地雷男/女**，光知道朋友在不在线怎么够？
+这是 [VRCX](https://github.com/vrcx-team/VRCX) 的魔改分支，旨在优化体验，修复漏洞，补全功能。
 
+> 虽然原版 VRCX 已经很好用了，但要想成为一名合格的 **地雷男/女**，光知道朋友在不在线怎么够？<br>
 你还需要知道 TA 和谁在一起 ~~、去了哪里、待了多久、为什么不陪你玩~~ 👁️...
 
 于是就有了这个版本。
