@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src="https://raw.githubusercontent.com/vrcx-team/VRCX/master/images/VRCX.ico" width="64" height="64"> VRCX-地雷Edition
+# <img src="./images/VRCX.png" width="64" height="64"> VRCX-地雷Edition
 
 [![GitHub Workflow Status](https://github.com/FuLuTang/VRCX-jirai/actions/workflows/github_actions.yml/badge.svg)](https://github.com/FuLuTang/VRCX-jirai/actions/workflows/github_actions.yml)
 
@@ -14,18 +14,21 @@
 
 于是就有了这个版本。
 
-- Windows 可以从 [Releases](https://github.com/FuLuTang/VRCX-jirai/releases/latest) 页面下载最新安装包（`VRCX-Jirai_XXXX.X.XX_Setup.exe`）直接安装。
-- MacOS 和 Linux，你懂的。
-- 如果想下载测试最新的构建版本，请点击 [GitHub Actions](https://github.com/FuLuTang/VRCX-jirai/actions/workflows/github_actions.yml)。
-- 如需从源码构建，请参考下方"从源码构建"说明。
+| 目标平台 | 下载链接 / 安装说明 |
+| :--- | :--- |
+| **Windows** | [最新发布版本 (Releases)](https://github.com/FuLuTang/VRCX-jirai/releases/latest) |
+| 💡 **避坑指路** | **若启动后看不到新功能**，请在侧边栏 `右键 - 自定义导航栏 - 恢复默认` |
+| **MacOS / Linux** | 需要手动构建，请参考下文 [从源码构建](#从源码构建) |
+| **Beta 测试版** | [GitHub Actions (获取最新自动构建)](https://github.com/FuLuTang/VRCX-jirai/actions/workflows/github_actions.yml) |
+
 
 <div align="center">
 
-> 抵制不良关系，拒绝盲目地雷。<br>注意自我保护，谨防受骗上当。<br>适度视奸益脑，沉迷VRC伤身。<br>合理安排关系，享受健康生活。<br><br>`功能仅供娱乐，勿用非法用途!`
+> 抵制不良关系，拒绝盲目地雷。<br>注意自我保护，谨防受骗上当。<br>适度视奸益脑，沉迷VRC伤身。<br>合理安排关系，享受健康生活。
 
 </div>
 
-> 叠甲：<br>本分支仅添加了更多的“数据展示”的功能。
+> 叠甲：`功能仅供娱乐，勿用非法用途!`<br>本分支仅添加了更多的“数据展示”的功能。
 所有的功能都是基于 VRCX 的原版数据库和原版接口API，没有实现任何有关“不该获取到的信息”。
 所有抓取到的信息都是**公开**的，**不存在任何盗取隐私**的行为。
 <br>如果你认为有任何不妥之处（如某类信息不该被获取），请向 `VRCX` 官方反馈，而不是向我。
