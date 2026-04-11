@@ -9,6 +9,7 @@ export const defaultVisibility = {
     proxy: true,
     ws: true,
     profileInfoSync: true,
+    nowPlaying: true,
     uptime: true,
     clocks: true,
     zoom: true,

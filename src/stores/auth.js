@@ -33,6 +33,7 @@ import security from '../services/security';
 import webApiService from '../services/webapi';
 
 import * as workerTimers from 'worker-timers';
+import { useActivityStore } from './activity';
 
 export const useAuthStore = defineStore('Auth', () => {
     const advancedSettingsStore = useAdvancedSettingsStore();
@@ -43,6 +44,7 @@ export const useAuthStore = defineStore('Auth', () => {
     const updateLoopStore = useUpdateLoopStore();
     const modalStore = useModalStore();
     const vrcxStore = useVrcxStore();
+    const activityStore = useActivityStore();
 
     const { t } = useI18n();
     const state = reactive({
@@ -1018,6 +1020,8 @@ export const useAuthStore = defineStore('Auth', () => {
         await manualRelationsStore.loadManualRelations();
         watchState.isLoggedIn = true;
         AppApi.CheckGameRunning(); // restore state from hot-reload
+
+        activityStore.startFullCacheBuild(userStore.currentUser.id);
     }
 
     /**

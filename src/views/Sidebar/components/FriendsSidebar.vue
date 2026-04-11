@@ -357,7 +357,9 @@
     });
 
     const visibleFavoriteOnlineFriends = computed(() => {
-        const filtered = allFavoriteOnlineFriends.value.filter((friend) => selectedFavoriteGroupIds.value.has(friend.id));
+        const filtered = allFavoriteOnlineFriends.value.filter((friend) =>
+            selectedFavoriteGroupIds.value.has(friend.id)
+        );
         return excludeSameInstance(filtered);
     });
 

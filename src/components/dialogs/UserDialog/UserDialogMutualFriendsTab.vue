@@ -111,7 +111,12 @@
         if (!query) return friends;
         return friends.filter((u) => (u.displayName || '').toLowerCase().includes(query));
     });
-    watch(() => userDialog.value.id, () => { searchQuery.value = ''; });
+    watch(
+        () => userDialog.value.id,
+        () => {
+            searchQuery.value = '';
+        }
+    );
 
     const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 

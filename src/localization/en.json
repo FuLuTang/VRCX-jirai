@@ -38,7 +38,11 @@
             "thursday": "Thursday",
             "friday": "Friday",
             "saturday": "Saturday"
-        }
+        },
+        "duration": "Duration",
+        "load_more": "Load more",
+        "no_more": "No more entries",
+        "current_session": "Current"
     },
     "nav_tooltip": {
         "friends_locations": "Friends Locations",
@@ -176,8 +180,6 @@
         "search_groups": "Groups",
         "search_own_groups": "Own Groups",
         "search_joined_groups": "Joined Groups",
-        "search_recently_met": "Recently Met",
-        "search_recently_joined": "Recently Joined Worlds",
         "search_result_active": "Offline",
         "search_result_offline": "Active",
         "search_result_more": "Search More:",
@@ -219,6 +221,8 @@
             "no_new_notifications": "No new notifications in the past 24 hours",
             "no_unseen_notifications": "No unread notifications"
         },
+        "search_recently_met": "Recently Met",
+        "search_recently_joined": "Recently Joined Worlds",
         "tracked_nonfriends": {
             "tab_label": "Tracked",
             "empty": "No tracked non-friends yet. Click \"+\" to add one by user ID, or use the \"⋯\" menu in any user's profile.",
@@ -293,6 +297,15 @@
                 "External": "External",
                 "StringLoad": "String load",
                 "ImageLoad": "Image load"
+            },
+            "sessions": {
+                "switch_to_table": "Table view",
+                "switch_to_sessions": "Sessions view",
+                "date_range": "Date range",
+                "players_joined": "{count} players joined",
+                "players_left": "{count} players left",
+                "play_count": "×{count}",
+                "no_data": "No game log data"
             }
         },
         "player_list": {
@@ -629,6 +642,14 @@
                     "manual": "Manual Relation",
                     "non_friend": "Includes Non-friend"
                 }
+            },
+            "playtime_trend": {
+                "header": "Daily Playtime",
+                "online_hours": "Hours",
+                "daily_avg": "Daily Average",
+                "total": "Total",
+                "waiting": "Building playtime data, please come back later.",
+                "no_data": "No playtime data available"
             },
             "hot_worlds": {
                 "tab_label": "Hot Worlds",
@@ -1370,8 +1391,6 @@
         }
     },
     "dialog": {
-        "close": "Close",
-        "refresh": "Refresh",
         "alertdialog": {
             "ok": "OK",
             "cancel": "Cancel",
@@ -1470,7 +1489,6 @@
                 "unknown_avatar": "Unknown Avatar",
                 "represented_group": "Represented Group",
                 "bio": "Bio",
-                "bio_diff_toggle": "Toggle bio diff",
                 "last_seen": "Last Seen",
                 "join_count": "Join Count",
                 "time_together": "Time Together",
@@ -1501,7 +1519,9 @@
                 "instance_age_gated": "Age Gated",
                 "open_previous_instance": "Open Previous Instances",
                 "show_mutual_friends": "Show Mutual Friends",
-                "show_discord_connections": "Show Discord Connections"
+                "show_discord_connections": "Show Discord Connections",
+                "instance_minimum_avatar_performance": "Min Avatar Perf",
+                "bio_diff_toggle": "Toggle bio diff"
             },
             "groups": {
                 "header": "Groups",
@@ -1574,6 +1594,10 @@
                 "most_active_time": "Peak hours:",
                 "period": "Period:",
                 "period_90": "Last 90 Days",
+                "period_180": "Last 6 Months",
+                "period_365": "Last 1 Year",
+                "period_all": "All Time",
+                "building_cache": "Computing all activity data for extended ranges...",
                 "period_30": "Last 30 Days",
                 "period_7": "Last 7 Days",
                 "minutes_online": "min online",
@@ -1959,7 +1983,8 @@
             "legacy": "Legacy",
             "roles": "Roles",
             "open_ingame": "Open in-game",
-            "display_name": "Display Name (VRC+)"
+            "display_name": "Display Name (VRC+)",
+            "minimum_avatar_performance": "Minimum Avatar Performance"
         },
         "launch": {
             "header": "Launch",
@@ -2514,7 +2539,9 @@
         "avatar_database_provider": {
             "header": "Avatar Database Provider",
             "add_provider": "Add Provider"
-        }
+        },
+        "close": "Close",
+        "refresh": "Refresh"
     },
     "confirm": {
         "title": "Confirm",
@@ -3244,7 +3271,8 @@
         "clock": "Clock",
         "clocks_label": "Clocks",
         "clocks_none": "None",
-        "info_sync": "Sync",
-        "timezone": "Timezone"
+        "timezone": "Timezone",
+        "now_playing": "Now Playing",
+        "info_sync": "Sync"
     }
 }
