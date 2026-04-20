@@ -80,15 +80,15 @@
                         </Button>
                     </TooltipWrapper>
                     <TooltipWrapper
-                        :content="showTrackedNonFriends
+                        :content="showNonFriends
                             ? t('view.charts.mutual_friend.tracked_nonfriend.hide_tooltip')
                             : t('view.charts.mutual_friend.tracked_nonfriend.show_tooltip')"
                         side="top">
                         <Button
                             class="rounded-full"
                             size="icon"
-                            :variant="showTrackedNonFriends ? 'secondary' : 'ghost'"
-                            @click="toggleShowTrackedNonFriends">
+                            :variant="showNonFriends ? 'secondary' : 'ghost'"
+                            @click="toggleShowNonFriends">
                             <UsersIcon />
                         </Button>
                     </TooltipWrapper>
@@ -621,7 +621,7 @@
     const contextMenuNodeId = ref(null);
     const graphMeta = ref(new Map());
     const isRefreshingNode = ref(false);
-    const showTrackedNonFriends = ref(true);
+    const showNonFriends = ref(true);
 
     const EXCLUDED_FRIENDS_KEY = 'VRCX_MutualGraphExcludedFriends';
     const excludedFriendIds = useLocalStorage(EXCLUDED_FRIENDS_KEY, []);
@@ -919,8 +919,14 @@
         const nodeDegree = new Map();
         const nodeNames = new Map();
 
+        function isNonFriend(id) {
+            if (!friends.value) return false;
+            return !friends.value.has(id);
+        }
+
         function ensureNode(id, name) {
             if (!id || excludeSet.has(id)) return;
+            if (!showNonFriends.value && isNonFriend(id)) return;
             if (!graph.hasNode(id)) {
                 graph.addNode(id);
                 nodeDegree.set(id, 0);
@@ -931,6 +937,7 @@
         function addEdge(source, target) {
             if (!source || !target || source === target) return;
             if (excludeSet.has(source) || excludeSet.has(target)) return;
+            if (!showNonFriends.value && (isNonFriend(source) || isNonFriend(target))) return;
             const [a, b] = [source, target].sort();
             const key = `${a}__${b}`;
             if (graph.hasEdge(key)) return;
@@ -962,14 +969,16 @@
             ensureNode(userIdA, refA?.displayName || userIdA);
             ensureNode(userIdB, refB?.displayName || userIdB);
             if (!excludeSet.has(userIdA) && !excludeSet.has(userIdB)) {
-                const [a, b] = [userIdA, userIdB].sort();
-                const key = `${a}__${b}`;
-                if (!graph.hasEdge(key)) {
-                    graph.addEdgeWithKey(key, a, b, { size: 0.75, manualRelation: true });
-                    nodeDegree.set(a, (nodeDegree.get(a) || 0) + 1);
-                    nodeDegree.set(b, (nodeDegree.get(b) || 0) + 1);
-                } else {
-                    graph.setEdgeAttribute(key, 'manualRelation', true);
+                if (graph.hasNode(userIdA) && graph.hasNode(userIdB)) {
+                    const [a, b] = [userIdA, userIdB].sort();
+                    const key = `${a}__${b}`;
+                    if (!graph.hasEdge(key)) {
+                        graph.addEdgeWithKey(key, a, b, { size: 0.75, manualRelation: true });
+                        nodeDegree.set(a, (nodeDegree.get(a) || 0) + 1);
+                        nodeDegree.set(b, (nodeDegree.get(b) || 0) + 1);
+                    } else {
+                        graph.setEdgeAttribute(key, 'manualRelation', true);
+                    }
                 }
             }
         }
@@ -986,7 +995,7 @@
                 label,
                 size,
                 type: 'border',
-                trackedNonFriend: !isFriend && trackedNonFriendSet.value.has(id)
+                nonFriend: !isFriend
             };
             if (meta?.has(id)) {
                 const m = meta.get(id);
@@ -1135,24 +1144,18 @@
         sigmaInstance.setSetting('nodeReducer', (node, data) => {
             const res = { ...data };
 
-            // Hide tracked non-friends when toggle is off
-            if (data.trackedNonFriend && !showTrackedNonFriends.value) {
-                res.hidden = true;
-                return res;
-            }
-
             if (data.optedOut) {
                 res.borderColor = '#9ca3af';
             }
 
             // Non-friends: grey
-            if (data.trackedNonFriend) {
+            if (data.nonFriend) {
                 res.color = '#9ca3af';
                 res.labelColor = '#9ca3af';
             }
 
             if (!hovered) {
-                if (!data.trackedNonFriend) {
+                if (!data.nonFriend) {
                     res.color = data.optedOut ? '#d1d5db' : data.color;
                 }
                 res.zIndex = 1;
@@ -1203,7 +1206,7 @@
             // Any edge connected to at least one non-friend node
             let isNonFriendEdge = false;
             try {
-                isNonFriendEdge = extremities.some(n => graph.hasNode(n) && graph.getNodeAttribute(n, 'trackedNonFriend'));
+                isNonFriendEdge = extremities.some(n => graph.hasNode(n) && graph.getNodeAttribute(n, 'nonFriend'));
             } catch {
                 // node may have been dropped during rebuild
             }
@@ -1490,10 +1493,19 @@
     }
 
     /**
-     * Toggle visibility of tracked non-friends in the graph.
+     * Toggle visibility of non-friends in the graph and rebuild layout.
      */
-    function toggleShowTrackedNonFriends() {
-        showTrackedNonFriends.value = !showTrackedNonFriends.value;
-        sigmaInstance?.refresh();
+    async function toggleShowNonFriends() {
+        showNonFriends.value = !showNonFriends.value;
+        if (!lastMutualMap) {
+            // When no mutual map has been built yet, only refresh current view state.
+            sigmaInstance?.refresh();
+            return;
+        }
+        try {
+            await applyGraph(lastMutualMap);
+        } catch (err) {
+            console.error('[MutualNetworkGraph] Failed to re-apply graph after non-friend toggle', err);
+        }
     }
 </script>

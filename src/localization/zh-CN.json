@@ -621,8 +621,8 @@
                     "track_hint": "请先在关系网中右键点击一个节点",
                     "added": "已追踪 {name}",
                     "removed": "已取消追踪 {name}",
-                    "show_tooltip": "在关系网中显示追踪的非好友",
-                    "hide_tooltip": "在关系网中隐藏追踪的非好友"
+                    "show_tooltip": "在关系网中显示非好友",
+                    "hide_tooltip": "在关系网中隐藏非好友"
                 },
                 "manual_relations": {
                     "button_tooltip": "手动判定好友关系",
