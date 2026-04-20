@@ -969,14 +969,16 @@
             ensureNode(userIdA, refA?.displayName || userIdA);
             ensureNode(userIdB, refB?.displayName || userIdB);
             if (!excludeSet.has(userIdA) && !excludeSet.has(userIdB)) {
-                const [a, b] = [userIdA, userIdB].sort();
-                const key = `${a}__${b}`;
-                if (!graph.hasEdge(key)) {
-                    graph.addEdgeWithKey(key, a, b, { size: 0.75, manualRelation: true });
-                    nodeDegree.set(a, (nodeDegree.get(a) || 0) + 1);
-                    nodeDegree.set(b, (nodeDegree.get(b) || 0) + 1);
-                } else {
-                    graph.setEdgeAttribute(key, 'manualRelation', true);
+                if (graph.hasNode(userIdA) && graph.hasNode(userIdB)) {
+                    const [a, b] = [userIdA, userIdB].sort();
+                    const key = `${a}__${b}`;
+                    if (!graph.hasEdge(key)) {
+                        graph.addEdgeWithKey(key, a, b, { size: 0.75, manualRelation: true });
+                        nodeDegree.set(a, (nodeDegree.get(a) || 0) + 1);
+                        nodeDegree.set(b, (nodeDegree.get(b) || 0) + 1);
+                    } else {
+                        graph.setEdgeAttribute(key, 'manualRelation', true);
+                    }
                 }
             }
         }
