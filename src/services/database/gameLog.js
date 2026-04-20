@@ -2029,6 +2029,7 @@ const gameLog = {
             }
         );
         return results;
+    },
 
     // ── Sessions view queries (read-only, no existing behavior changed) ──
 
