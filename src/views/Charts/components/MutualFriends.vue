@@ -919,8 +919,13 @@
         const nodeDegree = new Map();
         const nodeNames = new Map();
 
+        function isNonFriend(id) {
+            return !(friends.value?.has ? friends.value.has(id) : false);
+        }
+
         function ensureNode(id, name) {
             if (!id || excludeSet.has(id)) return;
+            if (!showTrackedNonFriends.value && isNonFriend(id)) return;
             if (!graph.hasNode(id)) {
                 graph.addNode(id);
                 nodeDegree.set(id, 0);
@@ -931,6 +936,7 @@
         function addEdge(source, target) {
             if (!source || !target || source === target) return;
             if (excludeSet.has(source) || excludeSet.has(target)) return;
+            if (!showTrackedNonFriends.value && (isNonFriend(source) || isNonFriend(target))) return;
             const [a, b] = [source, target].sort();
             const key = `${a}__${b}`;
             if (graph.hasEdge(key)) return;
@@ -986,7 +992,7 @@
                 label,
                 size,
                 type: 'border',
-                trackedNonFriend: !isFriend && trackedNonFriendSet.value.has(id)
+                trackedNonFriend: !isFriend
             };
             if (meta?.has(id)) {
                 const m = meta.get(id);
@@ -1134,12 +1140,6 @@
 
         sigmaInstance.setSetting('nodeReducer', (node, data) => {
             const res = { ...data };
-
-            // Hide tracked non-friends when toggle is off
-            if (data.trackedNonFriend && !showTrackedNonFriends.value) {
-                res.hidden = true;
-                return res;
-            }
 
             if (data.optedOut) {
                 res.borderColor = '#9ca3af';
@@ -1490,10 +1490,18 @@
     }
 
     /**
-     * Toggle visibility of tracked non-friends in the graph.
+     * Toggle visibility of non-friends in the graph.
      */
-    function toggleShowTrackedNonFriends() {
+    async function toggleShowTrackedNonFriends() {
         showTrackedNonFriends.value = !showTrackedNonFriends.value;
-        sigmaInstance?.refresh();
+        if (!lastMutualMap) {
+            sigmaInstance?.refresh();
+            return;
+        }
+        try {
+            await applyGraph(lastMutualMap);
+        } catch (err) {
+            console.error('[MutualNetworkGraph] Failed to re-apply graph after non-friend toggle', err);
+        }
     }
 </script>
