@@ -1472,7 +1472,7 @@
                 "self_invite_tooltip": "Invite Yourself",
                 "open_in_vrchat_tooltip": "Open in VRChat",
                 "refresh_instance_info": "Refresh Instance Info",
-                "instance_queue": "Queue:",
+                "instance_queue": "Queue",
                 "instance_users": "Users:",
                 "instance_friends_tooltip": "Friends in this instance",
                 "instance_game_version": "Game Version:",
@@ -1511,8 +1511,8 @@
                 "copy_url": "Copy URL",
                 "copy_display_name": "Copy DisplayName",
                 "vrcplus_hides_avatar": "When a VRC+ profile photo is set, avatar info is hidden. This also hides avatar changes in the feed",
-                "instance_full": "full",
-                "instance_closed": "Instance closed",
+                "instance_full": "Full",
+                "instance_closed_at": "Instance closed at",
                 "instance_age_restricted": "Restricted",
                 "instance_age_restricted_tooltip": "In an age-restricted instance",
                 "close_instance": "Close Instance",
@@ -1520,7 +1520,7 @@
                 "open_previous_instance": "Open Previous Instances",
                 "show_mutual_friends": "Show Mutual Friends",
                 "show_discord_connections": "Show Discord Connections",
-                "instance_minimum_avatar_performance": "Min Avatar Perf",
+                "instance_minimum_avatar_performance": "Minimum Avatar Performance",
                 "bio_diff_toggle": "Toggle bio diff"
             },
             "groups": {
