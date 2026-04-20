@@ -80,15 +80,15 @@
                         </Button>
                     </TooltipWrapper>
                     <TooltipWrapper
-                        :content="showTrackedNonFriends
+                        :content="showNonFriends
                             ? t('view.charts.mutual_friend.tracked_nonfriend.hide_tooltip')
                             : t('view.charts.mutual_friend.tracked_nonfriend.show_tooltip')"
                         side="top">
                         <Button
                             class="rounded-full"
                             size="icon"
-                            :variant="showTrackedNonFriends ? 'secondary' : 'ghost'"
-                            @click="toggleShowTrackedNonFriends">
+                            :variant="showNonFriends ? 'secondary' : 'ghost'"
+                            @click="toggleShowNonFriends">
                             <UsersIcon />
                         </Button>
                     </TooltipWrapper>
@@ -621,7 +621,7 @@
     const contextMenuNodeId = ref(null);
     const graphMeta = ref(new Map());
     const isRefreshingNode = ref(false);
-    const showTrackedNonFriends = ref(true);
+    const showNonFriends = ref(true);
 
     const EXCLUDED_FRIENDS_KEY = 'VRCX_MutualGraphExcludedFriends';
     const excludedFriendIds = useLocalStorage(EXCLUDED_FRIENDS_KEY, []);
@@ -920,12 +920,13 @@
         const nodeNames = new Map();
 
         function isNonFriend(id) {
-            return !(friends.value?.has ? friends.value.has(id) : false);
+            if (!friends.value) return false;
+            return !friends.value.has(id);
         }
 
         function ensureNode(id, name) {
             if (!id || excludeSet.has(id)) return;
-            if (!showTrackedNonFriends.value && isNonFriend(id)) return;
+            if (!showNonFriends.value && isNonFriend(id)) return;
             if (!graph.hasNode(id)) {
                 graph.addNode(id);
                 nodeDegree.set(id, 0);
@@ -936,7 +937,7 @@
         function addEdge(source, target) {
             if (!source || !target || source === target) return;
             if (excludeSet.has(source) || excludeSet.has(target)) return;
-            if (!showTrackedNonFriends.value && (isNonFriend(source) || isNonFriend(target))) return;
+            if (!showNonFriends.value && (isNonFriend(source) || isNonFriend(target))) return;
             const [a, b] = [source, target].sort();
             const key = `${a}__${b}`;
             if (graph.hasEdge(key)) return;
@@ -992,7 +993,7 @@
                 label,
                 size,
                 type: 'border',
-                trackedNonFriend: !isFriend
+                nonFriend: !isFriend
             };
             if (meta?.has(id)) {
                 const m = meta.get(id);
@@ -1146,13 +1147,13 @@
             }
 
             // Non-friends: grey
-            if (data.trackedNonFriend) {
+            if (data.nonFriend) {
                 res.color = '#9ca3af';
                 res.labelColor = '#9ca3af';
             }
 
             if (!hovered) {
-                if (!data.trackedNonFriend) {
+                if (!data.nonFriend) {
                     res.color = data.optedOut ? '#d1d5db' : data.color;
                 }
                 res.zIndex = 1;
@@ -1203,7 +1204,7 @@
             // Any edge connected to at least one non-friend node
             let isNonFriendEdge = false;
             try {
-                isNonFriendEdge = extremities.some(n => graph.hasNode(n) && graph.getNodeAttribute(n, 'trackedNonFriend'));
+                isNonFriendEdge = extremities.some(n => graph.hasNode(n) && graph.getNodeAttribute(n, 'nonFriend'));
             } catch {
                 // node may have been dropped during rebuild
             }
@@ -1490,11 +1491,12 @@
     }
 
     /**
-     * Toggle visibility of non-friends in the graph.
+     * Toggle visibility of non-friends in the graph and rebuild layout.
      */
-    async function toggleShowTrackedNonFriends() {
-        showTrackedNonFriends.value = !showTrackedNonFriends.value;
+    async function toggleShowNonFriends() {
+        showNonFriends.value = !showNonFriends.value;
         if (!lastMutualMap) {
+            // When no mutual map has been built yet, only refresh current view state.
             sigmaInstance?.refresh();
             return;
         }
