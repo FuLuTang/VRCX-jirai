@@ -2922,7 +2922,8 @@
             "invalid_config": "Invalid JSON in config.json"
         },
         "gamelog": {
-            "vrchat_must_be_closed": "VRChat needs to be closed before this option can be changed"
+            "vrchat_must_be_closed": "VRChat needs to be closed before this option can be changed",
+            "recommended_pair": "💡 {nameA} and {nameB} may be friends (Score: {score})."
         },
         "copy_failed": "Copy failed",
         "error": "Error"

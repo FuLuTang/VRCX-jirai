@@ -1,5 +1,4 @@
 import { dbVars } from '../database';
-
 import sqliteService from '../sqlite.js';
 
 const manualRelations = {
@@ -97,6 +96,80 @@ const manualRelations = {
             { '@userId': userId }
         );
         return results;
+    },
+
+    /**
+     * Get bulk data for recommendation algorithm
+     */
+    async getCandidateCoInstances(myUserId) {
+        const eventsByLocation = new Map();
+        const mySessions = new Map();
+
+        // 1. Get my sessions
+        await sqliteService.execute((row) => {
+             const loc = row[0];
+             if (!mySessions.has(loc)) mySessions.set(loc, []);
+             mySessions.get(loc).push({ leaveAt: new Date(row[1]).getTime(), time: row[2] });
+        }, `SELECT location, created_at, time FROM gamelog_join_leave WHERE type = 'OnPlayerLeft' AND user_id = @myId AND time > 0 AND location NOT IN ('', 'traveling')`, { '@myId': myUserId });
+
+        // 2. Get everybody else's (local gamelog AND API feed tracking)
+        const sessionsQuery = `
+            SELECT location, user_id, created_at, time 
+            FROM gamelog_join_leave 
+            WHERE type = 'OnPlayerLeft' AND user_id != @myId AND user_id != '' AND time > 0 AND location NOT IN ('', 'offline', 'traveling', 'private', 'private:private')
+            UNION ALL
+            SELECT previous_location AS location, user_id, created_at, time 
+            FROM ${dbVars.userPrefix}_feed_gps 
+            WHERE previous_location NOT IN ('', 'offline', 'traveling', 'private', 'private:private') AND time > 0
+            UNION ALL
+            SELECT location, user_id, created_at, time 
+            FROM ${dbVars.userPrefix}_feed_online_offline 
+            WHERE type = 'Offline' AND location NOT IN ('', 'offline', 'traveling', 'private', 'private:private') AND time > 0
+        `;
+
+        await sqliteService.execute((row) => {
+             const loc = row[0];
+             if (!eventsByLocation.has(loc)) eventsByLocation.set(loc, []);
+             eventsByLocation.get(loc).push({
+                 userId: row[1],
+                 leaveAt: new Date(row[2]).getTime(),
+                 time: row[3]
+             });
+        }, sessionsQuery, { '@myId': myUserId });
+
+        // 3. Get first seen and last seen dates
+        const firstSeen = new Map();
+        const lastSeen = new Map();
+        
+        await sqliteService.execute((row) => {
+             firstSeen.set(row[0], new Date(row[1]).getTime());
+             lastSeen.set(row[0], new Date(row[2] || row[3]).getTime());
+        }, `
+            SELECT user_id, MIN(created_at), 
+                   MAX(CASE WHEN src = 3 THEN created_at END),
+                   MAX(created_at)
+            FROM (
+                SELECT user_id, created_at, 1 AS src FROM gamelog_join_leave
+                UNION ALL
+                SELECT user_id, created_at, 2 AS src FROM ${dbVars.userPrefix}_feed_gps
+                UNION ALL
+                SELECT user_id, created_at, 3 AS src FROM ${dbVars.userPrefix}_feed_online_offline
+            )
+            WHERE user_id != ''
+            GROUP BY user_id
+        `);
+
+        // 4. Get mutual friend snapshots
+        const oldMutualSnapshot = new Map();
+
+        await sqliteService.execute((row) => {
+            const friendId = row[0];
+            const mutualId = row[1];
+            if (!oldMutualSnapshot.has(friendId)) oldMutualSnapshot.set(friendId, new Set());
+            oldMutualSnapshot.get(friendId).add(mutualId);
+        }, `SELECT friend_id, mutual_id FROM ${dbVars.userPrefix}_mutual_graph_links_old`);
+
+        return { eventsByLocation, mySessions, firstSeen, lastSeen, oldMutualSnapshot };
     }
 };
 

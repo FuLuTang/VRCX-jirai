@@ -2939,7 +2939,8 @@
             "invalid_config": "config.json 中包含无效的 JSON 数据"
         },
         "gamelog": {
-            "vrchat_must_be_closed": "必须关闭 VRChat 客户端后才能修改日志设置"
+            "vrchat_must_be_closed": "必须关闭 VRChat 客户端后才能修改日志设置",
+            "recommended_pair": "💡 {nameA} 和 {nameB} 可能是好友（判定得分: {score}）。"
         },
         "copy_failed": "复制失败",
         "error": "错误"

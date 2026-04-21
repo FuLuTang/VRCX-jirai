@@ -40,6 +40,7 @@ import { useVrStore } from '../stores/vr';
 import { useVrcxStore } from '../stores/vrcx';
 
 import gameLogService from '../services/gameLog.js';
+import { useManualRelationsStore } from '../stores/manualRelations';
 
 import * as workerTimers from 'worker-timers';
 
@@ -152,6 +153,7 @@ export function addGameLogEntry(gameLog, location) {
     const photonStore = usePhotonStore();
     const sharedFeedStore = useSharedFeedStore();
     const notificationStore = useNotificationStore();
+    const manualRelationsStore = useManualRelationsStore();
 
     let entry = undefined;
     if (advancedSettingsStore.gameLogDisabled) {
@@ -271,6 +273,32 @@ export function addGameLogEntry(gameLog, location) {
                 userId
             );
             database.addGamelogJoinLeaveToDatabase(entry);
+
+            // 检查当前进房玩家是否与房间内的某人存在推荐关系
+            if (manualRelationsStore.cachedSuggestions && manualRelationsStore.cachedSuggestions.length > 0) {
+                const suggestions = manualRelationsStore.cachedSuggestions.filter(s => 
+                    !manualRelationsStore.ignoredSuggestionKeys.has(s.key) &&
+                    (s.userIdA === userId || s.userIdB === userId)
+                );
+
+                const t = i18n.global.t;
+                for (const suggestion of suggestions) {
+                    const otherUserId = suggestion.userIdA === userId ? suggestion.userIdB : suggestion.userIdA;
+                    // 如果对方也在房间里，触发通知
+                    if (locationStore.lastLocation.playerList.has(otherUserId)) {
+                        const noty = {
+                            type: 'External',
+                            created_at: new Date().toJSON(),
+                            message: t('message.gamelog.recommended_pair', {
+                                nameA: suggestion.nameA,
+                                nameB: suggestion.nameB,
+                                score: suggestion.displayScore
+                            })
+                        };
+                        notificationStore.playNoty(noty);
+                    }
+                }
+            }
             break;
         case 'player-left':
             const ref1 = locationStore.lastLocation.playerList.get(userId);

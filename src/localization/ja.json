@@ -2760,7 +2760,8 @@
             "invalid_config": "config.json に無効な JSON があります"
         },
         "gamelog": {
-            "vrchat_must_be_closed": "変更を適用するには、VRChat を閉じてください"
+            "vrchat_must_be_closed": "変更を適用するには、VRChat を閉じてください",
+            "recommended_pair": "💡 {nameA} と {nameB} はフレンドかもしれません (スコア: {score})。"
         },
         "copy_failed": "コピーに失敗しました",
         "error": "エラー"

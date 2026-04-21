@@ -1,6 +1,6 @@
 import { reactive, computed } from 'vue';
 import { database } from '../services/database';
-import { useFriendStore, useTrackedNonFriendsStore } from '../stores';
+import { useFriendStore, useTrackedNonFriendsStore, useManualRelationsStore } from '../stores';
 import { userRequest } from '../api';
 
 /**
@@ -182,6 +182,9 @@ export async function runSilentInfoFetch() {
     }
 
     if (!cancelled) {
+        infoFetchState.status = 'computing';
+        await useManualRelationsStore().computeSuggestions();
+        
         infoFetchState.status = 'done';
         console.log(
             `[InfoFetch] 完成：Bio 更新 ${infoFetchState.bioUpdated} 条，Status 更新 ${infoFetchState.statusUpdated} 条`

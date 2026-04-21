@@ -2776,7 +2776,8 @@
             "invalid_config": "config.json 中的 JSON 無效"
         },
         "gamelog": {
-            "vrchat_must_be_closed": "必須先關閉 VRChat 才能變更此設定"
+            "vrchat_must_be_closed": "必須先關閉 VRChat 才能變更此設定",
+            "recommended_pair": "💡 {nameA} 與 {nameB} 可能是好友（判定得分: {score}）。"
         },
         "copy_failed": "複製失敗",
         "error": "錯誤"

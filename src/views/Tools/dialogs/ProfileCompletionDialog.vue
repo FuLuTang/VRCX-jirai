@@ -30,27 +30,51 @@
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <div v-if="isRunning" class="flex gap-1">
-                                <span class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>
-                                <span class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse delay-75"></span>
-                                <span class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse delay-150"></span>
+                <!-- Workflow Phases Container -->
+                <div class="space-y-4">
+                    <!-- Phase 1: API Fetching -->
+                    <div class="space-y-2 relative transition-opacity duration-300" :class="{ 'opacity-50': isComputingPhase || isDone }">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div v-if="state.status === 'running'" class="flex gap-1">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>
+                                    <span class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse delay-75"></span>
+                                    <span class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse delay-150"></span>
+                                </div>
+                                 <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                    <template v-if="state.status === 'running'">阶段 1/2: 遍历拉取资料与状态差分 ({{ state.done }} / {{ state.friendsTotal }}+{{ state.trackedTotal }})</template>
+                                    <template v-else-if="isComputingPhase || isDone">阶段 1/2: 全网资料差异同步已完成</template>
+                                    <template v-else>阶段 1/2: 等待拉取信息差分...</template>
+                                </span>
                             </div>
-                             <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                <template v-if="isRunning">正在处理 {{ state.done }} / {{ state.friendsTotal }}+{{ state.trackedTotal }}</template>
-                                <template v-else-if="isDone">同步任务已完成</template>
-                                <template v-else>准备就绪</template>
-                            </span>
+                            <span class="text-xs font-bold font-mono" :class="state.status === 'running' ? 'text-primary' : 'text-muted-foreground'">{{ fetchProgressPercent }}%</span>
                         </div>
-                        <span class="text-xs font-bold font-mono text-primary">{{ progressPercent }}%</span>
+                        <Progress :model-value="fetchProgressPercent" class="h-1.5 w-full bg-secondary/50" />
                     </div>
-                    <Progress :model-value="progressPercent" class="h-1.5 w-full bg-secondary/50" />
+
+                    <!-- Phase 2: Relationship Compute -->
+                    <div class="space-y-2 relative transition-opacity duration-300" :class="{ 'opacity-50': isDone, 'opacity-40': !isComputingPhase && !isDone }">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div v-if="isComputingPhase" class="flex gap-1">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>
+                                    <span class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse delay-75"></span>
+                                    <span class="h-1.5 w-1.5 rounded-full bg-primary animate-pulse delay-150"></span>
+                                </div>
+                                 <span class="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                    <template v-if="isComputingPhase">阶段 2/2: {{ relationsStore.computingProgress.step }}...</template>
+                                    <template v-else-if="isDone">阶段 2/2: 隐藏推测关系网络已生成就绪</template>
+                                    <template v-else>阶段 2/2: 等待分析算力引擎启动...</template>
+                                </span>
+                            </div>
+                            <span class="text-xs font-bold font-mono" :class="isComputingPhase ? 'text-primary' : 'text-muted-foreground'">{{ computeProgressPercent }}%</span>
+                        </div>
+                        <Progress :model-value="computeProgressPercent" class="h-1.5 w-full bg-secondary/50" />
+                    </div>
                 </div>
 
                 <div v-if="isRunning" class="text-[11px] text-center italic text-muted-foreground animate-in fade-in slide-in-from-bottom-1 duration-300">
-                    正在同步中，请勿关闭弹窗以保证任务连续性...
+                    正在执行流水线操作中，请勿关闭弹窗以保证任务的连续性...
                 </div>
             </div>
 
@@ -95,6 +119,7 @@
         cancelInfoFetch,
         getTargetCount
     } from '../../../coordinators/infoFetchCoordinator';
+    import { useManualRelationsStore } from '../../../stores/manualRelations';
 
     const props = defineProps({
         visible: {
@@ -113,14 +138,26 @@
         set: (v) => { if (!v) emit('close'); }
     });
 
-    const isRunning = computed(() => state.status === 'running');
+    const isRunning = computed(() => state.status === 'running' || state.status === 'computing');
     const isDone = computed(() => state.status === 'done');
 
     const totalTarget = computed(() => getTargetCount());
 
-    const progressPercent = computed(() => {
+    const isComputingPhase = computed(() => state.status === 'computing');
+    const relationsStore = useManualRelationsStore();
+
+    const fetchProgressPercent = computed(() => {
+        if (state.status === 'computing' || state.status === 'done') return 100;
         if (state.total === 0) return 0;
         return Math.floor((state.done / state.total) * 100);
+    });
+
+    const computeProgressPercent = computed(() => {
+        if (state.status === 'done') return 100;
+        if (!isComputingPhase.value) return 0;
+        const p = relationsStore.computingProgress;
+        if (p.total === 0) return 0;
+        return Math.min(100, Math.floor((p.done / p.total) * 100));
     });
 
     watch(isVisible, (v) => {

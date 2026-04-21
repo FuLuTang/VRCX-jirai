@@ -195,7 +195,10 @@
                         </div>
 
                         <div class="flex shrink-0 flex-col items-end gap-1.5">
-                            <div class="flex items-center gap-1 text-xs text-muted-foreground">
+                            <div class="flex items-center gap-1.5 text-xs text-muted-foreground mr-1">
+                                <span v-if="item.joinLeavesCount > 1" class="text-[10px] bg-muted px-1.5 py-0.5 rounded opacity-80 leading-none tabular-nums">
+                                    {{ item.joinLeavesCount }} 次进出
+                                </span>
                                 <Clock class="size-3 shrink-0" />
                                 <span class="font-medium tabular-nums">{{ timeToText(item.coexistenceTime, true) }}</span>
                             </div>
@@ -386,26 +389,28 @@
                 firstMeetingByLocation.set(row.location, { overlapStart, aJoin, bJoin });
             }
         }
+        const grouped = new Map();
 
-        return rawResults.value
-            .map((row) => {
-                const friendATime = Math.max(0, row.friendATime);
-                const friendBTime = Math.max(0, row.friendBTime);
-                const friendALeaveMs = dayjs(row.friendALeave).valueOf();
-                const friendAJoin = friendALeaveMs - friendATime;
-                const friendBLeaveMs = dayjs(row.friendBLeave).valueOf();
-                const friendBJoin = friendBLeaveMs - friendBTime;
-                const overlapStart = Math.max(friendAJoin, friendBJoin);
-                const overlapEnd = Math.min(friendALeaveMs, friendBLeaveMs);
-                const coexistenceTime = Math.max(0, overlapEnd - overlapStart);
+        rawResults.value.forEach((row) => {
+            const friendATime = Math.max(0, row.friendATime);
+            const friendBTime = Math.max(0, row.friendBTime);
+            const friendALeaveMs = dayjs(row.friendALeave).valueOf();
+            const friendAJoin = friendALeaveMs - friendATime;
+            const friendBLeaveMs = dayjs(row.friendBLeave).valueOf();
+            const friendBJoin = friendBLeaveMs - friendBTime;
+            const overlapStart = Math.max(friendAJoin, friendBJoin);
+            const overlapEnd = Math.min(friendALeaveMs, friendBLeaveMs);
+            const coexistenceTime = Math.max(0, overlapEnd - overlapStart);
 
+            if (coexistenceTime < 30000) return;
+
+            if (!grouped.has(row.location)) {
                 const parsedLoc = parseLocation(row.location);
                 const instanceCreatorId = parsedLoc.userId || null;
                 const instanceCreatorName = resolveDisplayName(instanceCreatorId);
-
                 const maxPlayerCount = maxPlayerCountMap.value.get(row.location) ?? null;
                 const selfPresent = computeSelfPresent(row.location, overlapStart, overlapEnd);
-
+                
                 const first = firstMeetingByLocation.get(row.location);
                 let initiator = 'mutual';
                 if (first) {
@@ -415,19 +420,31 @@
                     }
                 }
 
-                return {
+                grouped.set(row.location, {
                     location: row.location,
                     friendALeave: friendALeaveMs,
                     coexistenceTime,
+                    joinLeavesCount: 1,
                     formattedDate: dayjs(friendALeaveMs).format(dateFormat),
                     instanceCreatorName,
                     maxPlayerCount,
                     selfPresent,
                     initiator
-                };
-            })
-            .filter((item) => item.coexistenceTime > 0)
-            .sort((a, b) => b.friendALeave - a.friendALeave);
+                });
+            } else {
+                const existing = grouped.get(row.location);
+                existing.coexistenceTime += coexistenceTime;
+                existing.joinLeavesCount += 1;
+                // selfPresent should be true if it was true in ANY of the segments
+                existing.selfPresent = existing.selfPresent || computeSelfPresent(row.location, overlapStart, overlapEnd);
+                if (friendALeaveMs > existing.friendALeave) {
+                    existing.friendALeave = friendALeaveMs;
+                    existing.formattedDate = dayjs(friendALeaveMs).format(dateFormat);
+                }
+            }
+        });
+
+        return Array.from(grouped.values()).sort((a, b) => b.friendALeave - a.friendALeave);
     });
 
     const totalCoexistenceTime = computed(() => {

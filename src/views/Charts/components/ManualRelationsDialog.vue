@@ -1,96 +1,89 @@
 <template>
     <Dialog v-model:open="isOpen">
-        <DialogContent class="w-[600px] max-w-[95vw] flex flex-col max-h-[80vh]" @open-auto-focus.prevent>
+        <DialogContent class="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
                 <DialogTitle>{{ t('view.charts.mutual_friend.manual_relations.dialog_title') }}</DialogTitle>
             </DialogHeader>
 
-            <Tabs default-value="list" class="flex-1 flex flex-col min-h-0">
-                <TabsList class="mx-0">
+            <Tabs default-value="list" class="flex-1 flex flex-col overflow-hidden">
+                <TabsList class="grid w-full grid-cols-2">
                     <TabsTrigger value="list">{{ t('view.charts.mutual_friend.manual_relations.tab_list') }}</TabsTrigger>
-                    <TabsTrigger value="add">{{ t('view.charts.mutual_friend.manual_relations.tab_add') }}</TabsTrigger>
                     <TabsTrigger value="suggest">{{ t('view.charts.mutual_friend.manual_relations.tab_suggest') }}</TabsTrigger>
                 </TabsList>
 
-                <!-- ============ LIST TAB ============ -->
-                <TabsContent value="list" class="flex-1 overflow-auto mt-3">
-                    <div v-if="relationsList.length === 0" class="flex items-center justify-center py-8 text-muted-foreground text-sm">
-                        {{ t('view.charts.mutual_friend.manual_relations.list_empty') }}
-                    </div>
-                    <div v-else class="flex flex-col gap-1">
-                        <div
-                            v-for="rel in enrichedRelations"
-                            :key="`${rel.userIdA}|${rel.userIdB}`"
-                            class="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50">
-                            <div class="flex-1 flex items-center gap-2 text-sm overflow-hidden">
-                                <button
-                                    class="underline underline-offset-2 truncate hover:text-primary"
-                                    @click="showUserDialog(rel.userIdA)">
-                                    {{ rel.nameA }}
-                                </button>
-                                <span class="text-muted-foreground shrink-0">↔</span>
-                                <button
-                                    class="underline underline-offset-2 truncate hover:text-primary"
-                                    @click="showUserDialog(rel.userIdB)">
-                                    {{ rel.nameB }}
-                                </button>
-                                <Badge v-if="rel.relationType !== 'friend'" variant="secondary" class="shrink-0 text-[10px]">
-                                    {{ rel.relationType }}
-                                </Badge>
-                            </div>
-                            <span class="text-xs text-muted-foreground shrink-0">{{ formatDate(rel.addedAt) }}</span>
-                            <Button size="icon-sm" variant="ghost" @click="deleteRelation(rel.userIdA, rel.userIdB)">
-                                <Trash2 class="size-3.5" />
+                <!-- List Tab -->
+                <TabsContent value="list" class="flex-1 flex flex-col gap-4 mt-4 overflow-hidden">
+                    <!-- Manual Add Form -->
+                    <div class="flex flex-col gap-3 p-4 border rounded-md bg-muted/30">
+                        <div class="grid grid-cols-2 gap-4">
+                            <Field>
+                                <FieldLabel>{{ t('view.charts.mutual_friend.manual_relations.user_a') }}</FieldLabel>
+                                <FieldContent>
+                                    <VirtualCombobox
+                                        v-model="selectedUserA"
+                                        :groups="friendPickerGroups"
+                                        :placeholder="t('view.charts.mutual_friend.manual_relations.user_placeholder')"
+                                        searchable>
+                                        <template #item="{ item, selected }">
+                                            <UserPickerItem :item="item" :selected="selected" />
+                                        </template>
+                                    </VirtualCombobox>
+                                </FieldContent>
+                            </Field>
+                            <Field>
+                                <FieldLabel>{{ t('view.charts.mutual_friend.manual_relations.user_b') }}</FieldLabel>
+                                <FieldContent>
+                                    <VirtualCombobox
+                                        v-model="selectedUserB"
+                                        :groups="friendPickerGroups"
+                                        :placeholder="t('view.charts.mutual_friend.manual_relations.user_placeholder')"
+                                        searchable>
+                                        <template #item="{ item, selected }">
+                                            <UserPickerItem :item="item" :selected="selected" />
+                                        </template>
+                                    </VirtualCombobox>
+                                </FieldContent>
+                            </Field>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span v-if="addError" class="text-xs text-destructive">{{ addError }}</span>
+                            <div v-else></div>
+                            <Button :disabled="!canAdd" @click="addRelation">
+                                {{ t('view.charts.mutual_friend.manual_relations.add_button') }}
                             </Button>
+                        </div>
+                    </div>
+
+                    <!-- Relations List -->
+                    <div class="flex-1 overflow-y-auto pr-2">
+                        <div v-if="enrichedRelations.length === 0" class="text-center py-8 text-muted-foreground italic">
+                            {{ t('view.charts.mutual_friend.manual_relations.list_empty') }}
+                        </div>
+                        <div v-else class="flex flex-col gap-2">
+                            <div
+                                v-for="rel in enrichedRelations"
+                                :key="`${rel.userIdA}-${rel.userIdB}`"
+                                class="flex items-center justify-between p-3 rounded-md border bg-card shadow-sm">
+                                <div class="flex items-center gap-3 overflow-hidden">
+                                    <button class="font-medium underline underline-offset-2 truncate hover:text-primary transition-colors" @click="showUserDialog(rel.userIdA)">{{ rel.nameA }}</button>
+                                    <span class="text-muted-foreground shrink-0 text-xs">↔</span>
+                                    <button class="font-medium underline underline-offset-2 truncate hover:text-primary transition-colors" @click="showUserDialog(rel.userIdB)">{{ rel.nameB }}</button>
+                                    <Badge variant="secondary" class="ml-2 h-5 px-1.5 text-[10px]">{{ rel.relationType }}</Badge>
+                                </div>
+                                <div class="flex items-center gap-4 shrink-0">
+                                    <span class="text-[11px] text-muted-foreground">{{ formatDate(rel.addedAt) }}</span>
+                                    <Button size="icon" variant="ghost" class="h-8 w-8 text-destructive hover:bg-destructive/10" @click="deleteRelation(rel.userIdA, rel.userIdB)">
+                                        <Trash2 class="size-4" />
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </TabsContent>
 
-                <!-- ============ ADD TAB ============ -->
-                <TabsContent value="add" class="mt-3">
-                    <div class="flex flex-col gap-4">
-                        <Field>
-                            <FieldLabel>{{ t('view.charts.mutual_friend.manual_relations.user_a') }}</FieldLabel>
-                            <FieldContent>
-                                <VirtualCombobox
-                                    :model-value="selectedUserA"
-                                    @update:modelValue="selectedUserA = $event"
-                                    :groups="friendPickerGroups"
-                                    :placeholder="t('view.charts.mutual_friend.manual_relations.user_placeholder')"
-                                    :search-placeholder="t('view.charts.mutual_friend.manual_relations.user_search')"
-                                    :close-on-select="true">
-                                    <template #item="{ item, selected }">
-                                        <UserPickerItem :item="item" :selected="selected" />
-                                    </template>
-                                </VirtualCombobox>
-                            </FieldContent>
-                        </Field>
-                        <Field>
-                            <FieldLabel>{{ t('view.charts.mutual_friend.manual_relations.user_b') }}</FieldLabel>
-                            <FieldContent>
-                                <VirtualCombobox
-                                    :model-value="selectedUserB"
-                                    @update:modelValue="selectedUserB = $event"
-                                    :groups="friendPickerGroups"
-                                    :placeholder="t('view.charts.mutual_friend.manual_relations.user_placeholder')"
-                                    :search-placeholder="t('view.charts.mutual_friend.manual_relations.user_search')"
-                                    :close-on-select="true">
-                                    <template #item="{ item, selected }">
-                                        <UserPickerItem :item="item" :selected="selected" />
-                                    </template>
-                                </VirtualCombobox>
-                            </FieldContent>
-                        </Field>
-                        <div v-if="addError" class="text-sm text-destructive">{{ addError }}</div>
-                        <Button :disabled="!canAdd" @click="addRelation">
-                            {{ t('view.charts.mutual_friend.manual_relations.add_button') }}
-                        </Button>
-                    </div>
-                </TabsContent>
-
-                <!-- ============ SUGGEST TAB ============ -->
-                <TabsContent value="suggest" class="flex-1 overflow-auto mt-3">
-                    <div class="flex flex-col gap-3">
+                <!-- Suggest Tab -->
+                <TabsContent value="suggest" class="flex-1 flex flex-col gap-4 mt-4 overflow-hidden">
+                    <div class="flex flex-col gap-3 shrink-0">
                         <p class="text-sm text-muted-foreground">
                             {{ t('view.charts.mutual_friend.manual_relations.suggest_description') }}
                         </p>
@@ -98,29 +91,41 @@
                             <Spinner v-if="isSuggesting" class="mr-2" />
                             {{ t('view.charts.mutual_friend.manual_relations.suggest_button') }}
                         </Button>
-                        <div v-if="suggestions.length > 0" class="flex flex-col gap-2 mt-2">
+                    </div>
+                    
+                    <div class="flex-1 overflow-y-auto pr-2 pb-4">
+                        <div v-if="suggestions.length > 0" class="flex flex-col gap-1 mt-2">
+                            <div class="flex items-center gap-3 px-2 text-[10px] text-muted-foreground font-bold opacity-70 sticky top-0 bg-background z-10 py-1">
+                                <div class="flex-1 min-w-0">关系人</div>
+                                <div class="w-[60px] text-right">得分</div>
+                                <div class="w-[60px]"></div>
+                            </div>
                             <div
                                 v-for="s in suggestions"
-                                :key="`${s.userIdA}|${s.userIdB}`"
-                                class="flex items-center gap-2 p-2 rounded-md border bg-card text-sm">
-                                <div class="flex-1 flex items-center gap-2 overflow-hidden">
-                                    <button class="underline underline-offset-2 truncate hover:text-primary" @click="showUserDialog(s.userIdA)">{{ s.nameA }}</button>
+                                :key="s.key"
+                                class="flex items-center gap-3 p-2 hover:bg-accent/50 rounded-lg group">
+                                <div class="flex-1 flex items-center gap-1 text-sm overflow-hidden min-w-0">
+                                    <button class="underline underline-offset-2 truncate hover:text-primary max-w-[140px]" @click="showUserDialog(s.userIdA)">{{ s.nameA }}</button>
                                     <span class="text-muted-foreground shrink-0">↔</span>
-                                    <button class="underline underline-offset-2 truncate hover:text-primary" @click="showUserDialog(s.userIdB)">{{ s.nameB }}</button>
+                                    <button class="underline underline-offset-2 truncate hover:text-primary max-w-[140px]" @click="showUserDialog(s.userIdB)">{{ s.nameB }}</button>
                                 </div>
-                                <div class="text-xs text-muted-foreground shrink-0 text-right">
-                                    {{ t('view.charts.mutual_friend.manual_relations.suggest_score', { score: s.score }) }}
-                                </div>
-                                <Button size="sm" variant="outline" @click="confirmSuggestion(s)">
-                                    {{ t('view.charts.mutual_friend.manual_relations.suggest_confirm') }}
-                                </Button>
-                                <Button size="sm" variant="ghost" @click="dismissSuggestion(s)">
-                                    {{ t('view.charts.mutual_friend.manual_relations.suggest_dismiss') }}
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div class="text-[14px] font-mono font-medium text-foreground shrink-0 cursor-help w-[60px] text-right">
+                                            {{ s.displayScore }}
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <pre class="text-xs font-sans whitespace-pre-wrap leading-relaxed">{{ s.tooltip }}</pre>
+                                    </TooltipContent>
+                                </Tooltip>
+                                <Button size="sm" variant="outline" class="w-[60px] h-8" @click="confirmSuggestion(s)">
+                                    添加
                                 </Button>
                             </div>
                         </div>
-                        <div v-else-if="hasSuggested && !isSuggesting" class="text-sm text-muted-foreground">
-                            {{ t('view.charts.mutual_friend.manual_relations.suggest_none') }}
+                        <div v-else-if="hasSuggested && !isSuggesting" class="text-sm text-muted-foreground mt-2">
+                            没有找到合适的推荐配对。尝试去抓取更多共同好友数据，或在更多房间产生日志记录。
                         </div>
                     </div>
                 </TabsContent>
@@ -136,6 +141,7 @@
     import { Field, FieldContent, FieldLabel } from '@/components/ui/field';
     import { Spinner } from '@/components/ui/spinner';
     import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+    import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
     import { VirtualCombobox } from '@/components/ui/virtual-combobox';
     import { Check as CheckIcon, Trash2 } from 'lucide-vue-next';
     import { computed, defineComponent, h, ref } from 'vue';
@@ -147,6 +153,7 @@
     import { useFriendStore, useTrackedNonFriendsStore, useUserStore } from '../../../stores';
     import { database } from '../../../services/database';
     import { showUserDialog } from '../../../coordinators/userCoordinator';
+    import { parseLocation } from '../../../shared/utils/locationParser';
 
     const isOpen = defineModel('open', { type: Boolean, default: false });
     const { t } = useI18n();
@@ -159,6 +166,7 @@
     const trackedStore = useTrackedNonFriendsStore();
     const { friends } = storeToRefs(friendStore);
     const { trackedList } = storeToRefs(trackedStore);
+    const { currentUser } = storeToRefs(userStore);
     const cachedUsers = userStore.cachedUsers;
 
     // ---- User picker helper component ----
@@ -241,87 +249,29 @@
         await manualRelationsStore.removeManualRelation(idA, idB);
     }
 
-    // ---- Suggest likely friends ----
-    const suggestions = ref([]);
+    const suggestions = computed(() => {
+        return manualRelationsStore.cachedSuggestions.filter(s => !manualRelationsStore.ignoredSuggestionKeys.has(s.key));
+    });
     const isSuggesting = ref(false);
     const hasSuggested = ref(false);
-    const dismissedSuggestions = ref(new Set());
 
-    /**
-     * Score-based "most likely friend" algorithm:
-     * - For each tracked non-friend user X, look at mutual-graph snapshots to find
-     *   which friends appear most alongside them.
-     * - Score = number of common mutual friends (from getMutualGraphSnapshot / getMutualGraphSnapshotFromOld).
-     * - Exclude pairs already in manual_relations_MANUEL or already friends.
-     */
     async function runSuggestion() {
         isSuggesting.value = true;
         hasSuggested.value = false;
-        suggestions.value = [];
-
         try {
-            const mutualMap = await database.getMutualGraphSnapshot();
-            const oldMutualMap = await database.getMutualGraphSnapshotFromOld();
-            const manualRelsList = await database.getManualRelations();
-            const manualSet = new Set(manualRelsList.map((r) => `${r.userIdA}|${r.userIdB}`));
-
-            // Build co-occurrence scores: for each pair (tracked_user, friend),
-            // count how many of the friend's mutuals include the tracked_user
-            const coScores = new Map(); // key: "idA|idB" (sorted) → score
-
-            function addScore(idA, idB, delta) {
-                const [a, b] = [idA, idB].sort();
-                const key = `${a}|${b}`;
-                coScores.set(key, (coScores.get(key) || 0) + delta);
-            }
-
-            // Iterate current snapshot: for each (friend, mutuals), increment score
-            // for all (friend, mutual) pairs
-            for (const [friendId, mutualIds] of mutualMap.entries()) {
-                for (const mutualId of mutualIds) {
-                    if (!mutualId || mutualId === friendId) continue;
-                    addScore(friendId, mutualId, 1);
-                }
-            }
-
-            // Also boost using historical snapshot
-            for (const [friendId, mutualIds] of oldMutualMap.entries()) {
-                for (const mutualId of mutualIds) {
-                    if (!mutualId || mutualId === friendId) continue;
-                    addScore(friendId, mutualId, 0.5);
-                }
-            }
-
-            // Filter: exclude already-friends pairs, already-manual, self, dismissed
-            const result = [];
-            for (const [key, score] of coScores.entries()) {
-                if (score < 2) continue;
-                const [idA, idB] = key.split('|');
-                if (friends.value.has(idA) && friends.value.has(idB)) continue;
-                if (manualSet.has(key)) continue;
-                if (dismissedSuggestions.value.has(key)) continue;
-                const nameA = cachedUsers.get(idA)?.displayName || idA;
-                const nameB = cachedUsers.get(idB)?.displayName || idB;
-                result.push({ userIdA: idA, userIdB: idB, nameA, nameB, score: Math.round(score * 10) / 10, key });
-            }
-
-            result.sort((a, b) => b.score - a.score);
-            suggestions.value = result.slice(0, 20);
-        } catch (err) {
-            console.error('[ManualRelations] Suggestion error', err);
+            await manualRelationsStore.computeSuggestions();
         } finally {
             isSuggesting.value = false;
             hasSuggested.value = true;
         }
     }
 
-    async function confirmSuggestion(s) {
-        await manualRelationsStore.addManualRelation(s.userIdA, s.userIdB, 'friend');
-        suggestions.value = suggestions.value.filter((x) => x.key !== s.key);
+    function dismissSuggestion(s) {
+        manualRelationsStore.ignoreSuggestion(s.key);
     }
 
-    function dismissSuggestion(s) {
-        dismissedSuggestions.value.add(s.key);
-        suggestions.value = suggestions.value.filter((x) => x.key !== s.key);
+    async function confirmSuggestion(s) {
+        await manualRelationsStore.addManualRelation(s.userIdA, s.userIdB, 'friend');
+        manualRelationsStore.ignoreSuggestion(s.key);
     }
 </script>
