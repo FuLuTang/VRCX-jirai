@@ -68,9 +68,18 @@
                                     <button class="font-medium underline underline-offset-2 truncate hover:text-primary transition-colors" @click="showUserDialog(rel.userIdA)">{{ rel.nameA }}</button>
                                     <span class="text-muted-foreground shrink-0 text-xs">↔</span>
                                     <button class="font-medium underline underline-offset-2 truncate hover:text-primary transition-colors" @click="showUserDialog(rel.userIdB)">{{ rel.nameB }}</button>
-                                    <Badge variant="secondary" class="ml-2 h-5 px-1.5 text-[10px]">{{ rel.relationType }}</Badge>
                                 </div>
                                 <div class="flex items-center gap-4 shrink-0">
+                                    <Tooltip v-if="rel.suggestion">
+                                        <TooltipTrigger>
+                                            <div class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                                {{ rel.suggestion.displayScore }}
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <pre class="text-xs font-sans whitespace-pre-wrap leading-relaxed">{{ rel.suggestion.tooltip }}</pre>
+                                        </TooltipContent>
+                                    </Tooltip>
                                     <span class="text-[11px] text-muted-foreground">{{ formatDate(rel.addedAt) }}</span>
                                     <Button size="icon" variant="ghost" class="h-8 w-8 text-destructive hover:bg-destructive/10" @click="deleteRelation(rel.userIdA, rel.userIdB)">
                                         <Trash2 class="size-4" />
@@ -213,11 +222,16 @@
 
     // ---- Enrich relation list with display names ----
     const enrichedRelations = computed(() =>
-        relationsList.value.map((r) => ({
-            ...r,
-            nameA: cachedUsers.get(r.userIdA)?.displayName || r.userIdA,
-            nameB: cachedUsers.get(r.userIdB)?.displayName || r.userIdB
-        }))
+        relationsList.value.map((r) => {
+            const key = manualRelationsStore.pairKey(r.userIdA, r.userIdB);
+            const suggestion = manualRelationsStore.cachedSuggestions.find(s => s.key === key);
+            return {
+                ...r,
+                nameA: cachedUsers.get(r.userIdA)?.displayName || r.userIdA,
+                nameB: cachedUsers.get(r.userIdB)?.displayName || r.userIdB,
+                suggestion
+            };
+        })
     );
 
     function formatDate(iso) {
@@ -253,7 +267,8 @@
     }
 
     const suggestions = computed(() => {
-        return manualRelationsStore.cachedSuggestions.filter(s => !manualRelationsStore.ignoredSuggestionKeys.has(s.key));
+        return manualRelationsStore.cachedSuggestions
+            .filter(s => !s.isAdded && !manualRelationsStore.ignoredSuggestionKeys.has(s.key));
     });
     const isSuggesting = ref(false);
     const hasSuggested = ref(false);

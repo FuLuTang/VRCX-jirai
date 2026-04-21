@@ -147,7 +147,9 @@ export const useManualRelationsStore = defineStore('ManualRelations', () => {
                                     accessType: parsed.accessType || 'public',
                                     creatorId: creatorId,
                                     overlapStart,
-                                    overlapEnd
+                                    overlapEnd,
+                                    aJoin: sessA.leaveAt - sessA.time,
+                                    bJoin: sessB.leaveAt - sessB.time
                                 });
                             } else {
                                 const state = locPairs.get(key);
@@ -179,7 +181,8 @@ export const useManualRelationsStore = defineStore('ManualRelations', () => {
                         stats = { 
                             count: 0, 
                             weightedCount: 0,
-                            countMeAbsent: 0, 
+                            countMeAbsent: 0,
+                            countUnknown: 0,
                             hardMatch: false,
                             hostedByA: false,
                             hostedByB: false,
@@ -192,7 +195,26 @@ export const useManualRelationsStore = defineStore('ManualRelations', () => {
                     const weight = instanceWeightMap[state.accessType] || 0.5;
                     stats.weightedCount += weight;
 
-                    if (!state.mePresent) stats.countMeAbsent++;
+                    if (!state.mePresent) {
+                        stats.countMeAbsent++;
+                    } else {
+                        // Math detection for "Unknown" (snapshot)
+                        // If they both joined within 3 minutes of each other
+                        if (Math.abs(state.aJoin - state.bJoin) <= 180000) {
+                            let isSnapshot = false;
+                            for (const m of mySess) {
+                                const myStart = m.leaveAt - m.time;
+                                if (Math.abs(state.aJoin - myStart) <= 180000 && Math.abs(state.bJoin - myStart) <= 180000) {
+                                    isSnapshot = true;
+                                    break;
+                                }
+                            }
+                            if (isSnapshot) {
+                                stats.countUnknown++;
+                            }
+                        }
+                    }
+                    
                     if (state.hardMatch) stats.hardMatch = true;
                     
                     stats.firstMeeting = Math.min(stats.firstMeeting, state.overlapStart);
@@ -294,26 +316,20 @@ export const useManualRelationsStore = defineStore('ManualRelations', () => {
                     let multiplierStr = '';
                     let multiplier = 1.0;
                     let multiplierFormula = '';
-                    let absentPct = 0;
+                    let independentPct = 0;
 
-                    if (hasNonFriend) {
-                        multiplier = 1.5;
-                        multiplierStr = `150%`;
-                        multiplierFormula = `奖励: 含有非好友追踪对象，存在异步监测盲区，天然侦测难度大，补偿倍率 1.5x`;
+                    const indepRatio = stats.count > 0 ? (stats.countMeAbsent + stats.countUnknown) / stats.count : 0;
+                    independentPct = Math.round(indepRatio * 100);
+
+                    if (indepRatio <= 0.08) {
+                        multiplier = 0.55 + (indepRatio / 0.08) * (1.08 - 0.55);
                     } else {
-                        const absentRatio = stats.count > 0 ? stats.countMeAbsent / stats.count : 0;
-                        absentPct = Math.round(absentRatio * 100);
-
-                        if (absentRatio <= 0.08) {
-                            multiplier = 0.55 + (absentRatio / 0.08) * (1.08 - 0.55);
-                        } else {
-                            multiplier = 1.0 + absentRatio;
-                        }
-                        multiplierStr = `${Math.round(multiplier * 100)}%`;
-                        multiplierFormula = absentRatio <= 0.08 
-                            ? `惩罚: 0.55 + (${absentRatio.toFixed(3)} / 0.08) * 0.53`
-                            : `增幅: 1.0 + ${absentRatio.toFixed(3)}`;
+                        multiplier = 1.0 + indepRatio;
                     }
+                    multiplierStr = `${Math.round(multiplier * 100)}%`;
+                    multiplierFormula = indepRatio <= 0.08 
+                        ? `惩罚: 0.55 + (${indepRatio.toFixed(3)} / 0.08) * 0.53`
+                        : `增幅: 1.0 + ${indepRatio.toFixed(3)}`;
                     
                     if (crossHostMatch) {
                         multiplier *= 1.2;
@@ -328,11 +344,14 @@ export const useManualRelationsStore = defineStore('ManualRelations', () => {
                     tooltip = `最终得分: ${finalScore}\n`
                             + `计算式: ${baseScore.toFixed(1)} (基数) × ${multiplierStr} (权重)\n`
                             + `─────\n`
-                            + `基数构成: ${stats.weightedCount.toFixed(1)} (按实例加权的交集分数) + ${densityBonus.toFixed(1)} (短期密度加成)\n`
+                            + `基数构成: ${stats.weightedCount.toFixed(1)} (实例加权分) + ${densityBonus.toFixed(1)} (短期密度分)\n`
                             + `有效相遇: 实录 ${stats.count} 次\n`
-                            + `活跃窗口: ${Math.round(daysObservedSpan)} 天跨度 (${startDateStr} 至 ${endDateStr}，算法保底分母为 14 天)\n\n`
-                            + `缺席权重: ${multiplierStr} \n[${multiplierFormula}]\n`
-                            + (!hasNonFriend ? `共处中我不在场: ${stats.countMeAbsent} 次 (约 ${absentPct}%)` : `共处中我不在场: 以防误判，追踪对象的此项监控已豁免`);
+                            + `活跃窗口: ${Math.round(daysObservedSpan)} 天跨度 (${startDateStr} 至 ${endDateStr})\n\n`
+                            + `脱离玩家独立轨迹检出: \n`
+                            + `  > 异步共处 (我不在场): ${stats.countMeAbsent} 次\n`
+                            + `  > 事前共处 (快照未知): ${stats.countUnknown} 次\n`
+                            + `  * 综合独立率 = ${independentPct}%\n\n`
+                            + `独立权重影响: ${multiplierStr} \n[公式: ${multiplierFormula}]`;
                 }
 
                 result.push({ userIdA: idA, userIdB: idB, nameA, nameB, score: finalScore, displayScore, tooltip, key, isAdded });
@@ -361,6 +380,7 @@ export const useManualRelationsStore = defineStore('ManualRelations', () => {
         isManualRelation,
         setCachedSuggestions,
         ignoreSuggestion,
-        computeSuggestions
+        computeSuggestions,
+        pairKey
     };
 });

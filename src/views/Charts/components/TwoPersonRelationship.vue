@@ -223,7 +223,9 @@
                                         'shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none',
                                         item.initiator === 'mutual'
                                             ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
-                                            : 'text-orange-600 dark:text-orange-400'
+                                            : item.initiator === 'unknown'
+                                                ? 'bg-zinc-500/15 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800'
+                                                : 'text-orange-600 dark:text-orange-400'
                                     ]"
                                     :style="item.initiator === 'leftPlayer'
                                         ? { background: 'linear-gradient(to right, rgb(249 115 22 / 0.3), rgb(249 115 22 / 0))' }
@@ -421,16 +423,14 @@
                         let isSnapshot = false;
                         const mySessions = selfPresenceMap.value.get(row.location) || [];
                         for (const my of mySessions) {
-                            if (Math.abs(first.aJoin - my.start) <= THREE_MINUTES && Math.abs(first.bJoin - my.start) <= THREE_MINUTES) {
+                            const myJoin = dayjs(my.selfLeave).valueOf() - Math.max(0, my.selfTime);
+                            if (Math.abs(first.aJoin - myJoin) <= THREE_MINUTES && Math.abs(first.bJoin - myJoin) <= THREE_MINUTES) {
                                 isSnapshot = true;
                                 break;
                             }
                         }
                         
-                        // Fallback: If not a snapshot but one is literally not a friend, we still have no true async observation.
-                        const isNonFriend = !friendStore.friends.has(selectedFriendAId.value) || !friendStore.friends.has(selectedFriendBId.value);
-                        
-                        if (isSnapshot || isNonFriend) {
+                        if (isSnapshot) {
                             initiator = 'unknown';
                         }
                     }
