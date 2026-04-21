@@ -712,7 +712,8 @@
                 "max_player_count": "最高同时在场人数",
                 "initiator_leftPlayer": "左侧跟随",
                 "initiator_rightPlayer": "右侧跟随",
-                "initiator_mutual": "双向奔赴"
+                "initiator_mutual": "双向奔赴",
+                "initiator_unknown": "未知"
             },
             "relationship_timeline": {
                 "header": "关系时间轴",

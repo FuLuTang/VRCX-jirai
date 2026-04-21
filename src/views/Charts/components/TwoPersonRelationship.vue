@@ -417,6 +417,22 @@
                     const joinTimeDiffMs = Math.abs(first.aJoin - first.bJoin);
                     if (joinTimeDiffMs > THREE_MINUTES) {
                         initiator = first.aJoin > first.bJoin ? 'leftPlayer' : 'rightPlayer';
+                    } else if (selfPresent) {
+                        let isSnapshot = false;
+                        const mySessions = selfPresenceMap.value.get(row.location) || [];
+                        for (const my of mySessions) {
+                            if (Math.abs(first.aJoin - my.start) <= THREE_MINUTES && Math.abs(first.bJoin - my.start) <= THREE_MINUTES) {
+                                isSnapshot = true;
+                                break;
+                            }
+                        }
+                        
+                        // Fallback: If not a snapshot but one is literally not a friend, we still have no true async observation.
+                        const isNonFriend = !friendStore.friends.has(selectedFriendAId.value) || !friendStore.friends.has(selectedFriendBId.value);
+                        
+                        if (isSnapshot || isNonFriend) {
+                            initiator = 'unknown';
+                        }
                     }
                 }
 

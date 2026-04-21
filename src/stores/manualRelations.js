@@ -124,6 +124,7 @@ export const useManualRelationsStore = defineStore('ManualRelations', () => {
                             const [id1, id2] = [sessA.userId, sessB.userId].sort();
                             const key = `${id1}|${id2}`;
                             
+                            const isStrictPrivate = (parsed.accessType === 'invite' || parsed.accessType === 'private');
                             let hardMatch = false;
                             if (isStrictPrivate && (creatorId === id1 || creatorId === id2)) {
                                 hardMatch = true;
@@ -140,26 +141,72 @@ export const useManualRelationsStore = defineStore('ManualRelations', () => {
                             }
                             
                             if (!locPairs.has(key)) {
-                                locPairs.set(key, { hardMatch, mePresent });
+                                locPairs.set(key, { 
+                                    hardMatch, 
+                                    mePresent, 
+                                    accessType: parsed.accessType || 'public',
+                                    creatorId: creatorId,
+                                    overlapStart,
+                                    overlapEnd
+                                });
                             } else {
                                 const state = locPairs.get(key);
                                 state.hardMatch = state.hardMatch || hardMatch;
                                 state.mePresent = state.mePresent || mePresent;
+                                state.overlapStart = Math.min(state.overlapStart, overlapStart);
+                                state.overlapEnd = Math.max(state.overlapEnd, overlapEnd);
                             }
                         }
                     }
                 }
                 
+                const instanceWeightMap = {
+                    'invite': 1.0,
+                    'invite+': 1.0, 
+                    'private': 1.0,
+                    'friends': 1.8,
+                    'friends+': 1.2,
+                    'hidden': 1.2,
+                    'group': 1.0,
+                    'groupPublic': 1.0,
+                    'groupPlus': 1.0,
+                    'public': 0.5
+                };
+                
                 for (const [key, state] of locPairs.entries()) {
                     let stats = pairStats.get(key);
                     if (!stats) {
-                        stats = { count: 0, countMeAbsent: 0, hardMatch: false };
+                        stats = { 
+                            count: 0, 
+                            weightedCount: 0,
+                            countMeAbsent: 0, 
+                            hardMatch: false,
+                            hostedByA: false,
+                            hostedByB: false,
+                            firstMeeting: Infinity,
+                            lastMeeting: 0
+                        };
                         pairStats.set(key, stats);
                     }
                     stats.count++;
+                    const weight = instanceWeightMap[state.accessType] || 0.5;
+                    stats.weightedCount += weight;
+
                     if (!state.mePresent) stats.countMeAbsent++;
                     if (state.hardMatch) stats.hardMatch = true;
+                    
+                    stats.firstMeeting = Math.min(stats.firstMeeting, state.overlapStart);
+                    stats.lastMeeting = Math.max(stats.lastMeeting, state.overlapEnd);
+                    
+                    const [idA, idB] = key.split('|');
+                    if (state.creatorId === idA && (state.accessType === 'friends' || state.accessType === 'friends+' || state.accessType === 'hidden')) {
+                        stats.hostedByA = true;
+                    }
+                    if (state.creatorId === idB && (state.accessType === 'friends' || state.accessType === 'friends+' || state.accessType === 'hidden')) {
+                        stats.hostedByB = true;
+                    }
                 }
+
             }
 
             const knownFriendsSet = new Set();
@@ -206,7 +253,7 @@ export const useManualRelationsStore = defineStore('ManualRelations', () => {
                 if (knownFriendsSet.has(key)) continue;
                 
                 const [idA, idB] = key.split('|');
-                if (manualSet.has(key)) continue;
+                const isAdded = manualSet.has(key);
 
                 // User heuristic: If we found > 0 mutual friends for a player, it proves they have "Show Mutual Friends" ON.
                 // If BOTH players have the feature ON, and they aren't friends in `knownFriendsSet`, they are definitively NOT friends. Skip.
@@ -226,14 +273,12 @@ export const useManualRelationsStore = defineStore('ManualRelations', () => {
                 let displayScore = '';
                 let tooltip = '';
 
-                const firstA = firstSeen.get(idA) || now;
-                const firstB = firstSeen.get(idB) || now;
-                const lastA = lastSeen.get(idA) || now;
-                const lastB = lastSeen.get(idB) || now;
-                
-                const effectiveStartDate = Math.max(firstA, firstB);
-                const effectiveEndDate = Math.min(lastA, lastB, now);
-                const daysObservedSpan = (effectiveEndDate - effectiveStartDate) / (1000 * 60 * 60 * 24);
+                const hasNonFriend = !myFriendsSet.has(idA) || !myFriendsSet.has(idB);
+                const crossHostMatch = stats.hostedByA && stats.hostedByB;
+
+                const effectiveStartDate = stats.firstMeeting;
+                const effectiveEndDate = stats.lastMeeting;
+                const daysObservedSpan = Math.max(0, (effectiveEndDate - effectiveStartDate) / (1000 * 60 * 60 * 24));
                 const daysObserved = Math.max(14, daysObservedSpan);
                 const startDateStr = dayjs(effectiveStartDate).format('YYYY-MM-DD');
                 const endDateStr = dayjs(effectiveEndDate).format('YYYY-MM-DD');
@@ -241,42 +286,56 @@ export const useManualRelationsStore = defineStore('ManualRelations', () => {
                 if (stats.hardMatch) {
                     finalScore = 9999;
                     displayScore = '私房';
-                    tooltip = `一票肯定 (私密房间): 是\n由于双方之一是在特定私密房间的创建者，所以直接判定为肯定存在好友关系。`;
+                    tooltip = `一票肯定 (硬性关联): 是\n由于双方之一是你们所处 Invite 私密房间的创建人，推测与其存在核心邀请关系。`;
                 } else {
-                    const densityBonus = Math.round((stats.count / daysObserved) * 50);
-                    const baseScore = stats.count + densityBonus;
+                    const densityBonus = (stats.weightedCount / daysObserved) * 50;
+                    const baseScore = stats.weightedCount + densityBonus;
                     
                     let multiplierStr = '';
                     let multiplier = 1.0;
-                    const absentRatio = stats.count > 0 ? stats.countMeAbsent / stats.count : 0;
-                    const absentPct = Math.round(absentRatio * 100);
+                    let multiplierFormula = '';
+                    let absentPct = 0;
 
-                    if (absentRatio <= 0.08) {
-                        multiplier = 0.55 + (absentRatio / 0.08) * (1.08 - 0.55);
+                    if (hasNonFriend) {
+                        multiplier = 1.5;
+                        multiplierStr = `150%`;
+                        multiplierFormula = `奖励: 含有非好友追踪对象，存在异步监测盲区，天然侦测难度大，补偿倍率 1.5x`;
                     } else {
-                        multiplier = 1.0 + absentRatio;
+                        const absentRatio = stats.count > 0 ? stats.countMeAbsent / stats.count : 0;
+                        absentPct = Math.round(absentRatio * 100);
+
+                        if (absentRatio <= 0.08) {
+                            multiplier = 0.55 + (absentRatio / 0.08) * (1.08 - 0.55);
+                        } else {
+                            multiplier = 1.0 + absentRatio;
+                        }
+                        multiplierStr = `${Math.round(multiplier * 100)}%`;
+                        multiplierFormula = absentRatio <= 0.08 
+                            ? `惩罚: 0.55 + (${absentRatio.toFixed(3)} / 0.08) * 0.53`
+                            : `增幅: 1.0 + ${absentRatio.toFixed(3)}`;
                     }
-                    multiplierStr = `${Math.round(multiplier * 100)}%`;
+                    
+                    if (crossHostMatch) {
+                        multiplier *= 1.2;
+                        multiplierStr = `${Math.round(multiplier * 100)}%`;
+                        multiplierFormula += `\n[连带增收: 观测到双向进入对方开启的房间，附加 1.2x 互派加成]`;
+                    }
                     
                     finalScore = Math.round(baseScore * multiplier);
-                    if (finalScore < 5) continue; 
+                    if (finalScore < 1) continue; 
                     displayScore = `${finalScore}`;
-                    
-                    const multiplierFormula = absentRatio <= 0.08 
-                        ? `惩罚: 0.55 + (${absentRatio.toFixed(3)} / 0.08) * 0.53`
-                        : `增幅: 1.0 + ${absentRatio.toFixed(3)}`;
 
                     tooltip = `最终得分: ${finalScore}\n`
-                            + `计算式: ${baseScore} (基数) × ${multiplierStr} (权重)\n`
+                            + `计算式: ${baseScore.toFixed(1)} (基数) × ${multiplierStr} (权重)\n`
                             + `─────\n`
-                            + `基数构成: ${stats.count} (绝对次数) + ${densityBonus} (密度加成)\n`
-                            + `有效相遇: ${stats.count} 次\n`
-                            + `观测窗口: ${Math.round(daysObserved)} 天 (${startDateStr} 至 ${endDateStr})\n\n`
-                            + `缺席权重: ${multiplierStr} (${multiplierFormula})\n`
-                            + `共处中我不在场: ${stats.countMeAbsent} 次 (约 ${absentPct}%)`;
+                            + `基数构成: ${stats.weightedCount.toFixed(1)} (按实例加权的交集分数) + ${densityBonus.toFixed(1)} (短期密度加成)\n`
+                            + `有效相遇: 实录 ${stats.count} 次\n`
+                            + `活跃窗口: ${Math.round(daysObservedSpan)} 天跨度 (${startDateStr} 至 ${endDateStr}，算法保底分母为 14 天)\n\n`
+                            + `缺席权重: ${multiplierStr} \n[${multiplierFormula}]\n`
+                            + (!hasNonFriend ? `共处中我不在场: ${stats.countMeAbsent} 次 (约 ${absentPct}%)` : `共处中我不在场: 以防误判，追踪对象的此项监控已豁免`);
                 }
 
-                result.push({ userIdA: idA, userIdB: idB, nameA, nameB, score: finalScore, displayScore, tooltip, key });
+                result.push({ userIdA: idA, userIdB: idB, nameA, nameB, score: finalScore, displayScore, tooltip, key, isAdded });
             }
 
             result.sort((a, b) => b.score - a.score);

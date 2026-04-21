@@ -705,7 +705,8 @@
                 "max_player_count": "Peak players",
                 "initiator_leftPlayer": "Left Follow",
                 "initiator_rightPlayer": "Right Follow",
-                "initiator_mutual": "Mutual"
+                "initiator_mutual": "Mutual",
+                "initiator_unknown": "Unknown"
             },
             "relationship_timeline": {
                 "header": "Relationship Timeline",

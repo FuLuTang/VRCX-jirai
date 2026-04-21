@@ -119,9 +119,12 @@
                                         <pre class="text-xs font-sans whitespace-pre-wrap leading-relaxed">{{ s.tooltip }}</pre>
                                     </TooltipContent>
                                 </Tooltip>
-                                <Button size="sm" variant="outline" class="w-[60px] h-8" @click="confirmSuggestion(s)">
+                                <Button v-if="!s.isAdded" size="sm" variant="outline" class="w-[60px] h-8" @click="confirmSuggestion(s)">
                                     添加
                                 </Button>
+                                <div v-else class="text-xs text-muted-foreground w-[60px] flex items-center justify-center">
+                                    <CheckIcon class="w-3 h-3 mr-1" /> 已记录
+                                </div>
                             </div>
                         </div>
                         <div v-else-if="hasSuggested && !isSuggesting" class="text-sm text-muted-foreground mt-2">
