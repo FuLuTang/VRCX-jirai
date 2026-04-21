@@ -710,8 +710,8 @@
                 "self_not_present": "缺席",
                 "instance_creator": "房间创建者",
                 "max_player_count": "最高同时在场人数",
-                "initiator_leftPlayer": "左侧玩家",
-                "initiator_rightPlayer": "右侧玩家",
+                "initiator_leftPlayer": "左侧跟随",
+                "initiator_rightPlayer": "右侧跟随",
                 "initiator_mutual": "双向奔赴"
             },
             "relationship_timeline": {
