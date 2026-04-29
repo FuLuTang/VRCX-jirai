@@ -404,8 +404,6 @@
             const overlapEnd = Math.min(friendALeaveMs, friendBLeaveMs);
             const coexistenceTime = Math.max(0, overlapEnd - overlapStart);
 
-            if (coexistenceTime < 30000) return;
-
             if (!grouped.has(row.location)) {
                 const parsedLoc = parseLocation(row.location);
                 const instanceCreatorId = parsedLoc.userId || null;

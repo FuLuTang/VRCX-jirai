@@ -112,10 +112,13 @@
 
     const isBodyTeleport = computed(() => teleportTarget.value === 'body' || teleportTarget.value === document.body);
 
-    const wrapperStyle = computed(
-        () =>
-            `position:${isBodyTeleport.value ? 'fixed' : 'absolute'}; right:${props.right}px; bottom:${props.bottom}px; z-index:50;`
-    );
+    const wrapperStyle = computed(() => {
+        if (isBodyTeleport.value) {
+            return `position:fixed; right:${props.right}px; bottom:${props.bottom}px; z-index:50;`;
+        }
+        // sticky so it floats at the bottom-right within a scrollable container
+        return `position:sticky; float:right; bottom:${props.bottom}px; right:${props.right}px; z-index:50; margin-top:-40px; pointer-events:auto;`;
+    });
 </script>
 
 <template>

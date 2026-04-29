@@ -693,6 +693,9 @@
             },
             "two_person_relationship": {
                 "header": "双人关系",
+                "tips": {
+                    "description": "通过分析你的记录数据库，找出两位好友曾经共处一室的记录。即使你当时并不在场，它也会基于他们各自的游戏记录片段拼凑出完整的相遇时刻。"
+                },
                 "select_friend_a": "选择好友 A",
                 "select_friend_b": "选择好友 B",
                 "search_friend": "搜索好友...",

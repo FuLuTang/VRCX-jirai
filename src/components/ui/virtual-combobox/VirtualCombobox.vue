@@ -21,7 +21,7 @@
             </Button>
         </PopoverTrigger>
 
-        <PopoverContent class="w-(--reka-popover-trigger-width) p-2">
+        <PopoverContent class="w-[--reka-popover-trigger-width] min-w-[200px] p-2">
             <Input v-if="searchable" v-model="searchText" :placeholder="searchPlaceholder" class="mb-2" />
 
             <div

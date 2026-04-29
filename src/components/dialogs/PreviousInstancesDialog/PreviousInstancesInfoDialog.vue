@@ -1,12 +1,12 @@
 <template>
-    <div>
+    <div class="flex flex-col h-full">
         <DialogHeader>
             <DialogTitle>{{ t('dialog.previous_instances.info') }}</DialogTitle>
         </DialogHeader>
 
         <DataTableLayout
             v-if="viewMode === 'table'"
-            class="min-w-0 w-full"
+            class="min-w-0 w-full flex-1"
             :table="table"
             :loading="loading"
             :table-style="tableStyle"
@@ -57,8 +57,8 @@
             </template>
         </DataTableLayout>
 
-        <div v-else-if="viewMode === 'chart'" class="flex flex-col min-w-0 w-full h-full">
-            <div class="flex items-center justify-between px-1 py-2">
+        <div v-else-if="viewMode === 'chart'" class="flex flex-col min-w-0 w-full flex-1">
+            <div class="flex items-center justify-between px-1 py-2 flex-shrink-0">
                 <div class="flex items-center gap-2">
                     <ToggleGroup
                         type="single"
@@ -98,6 +98,43 @@
                 <PreviousInstancesInfoChart v-else :chart-data="chartData" />
             </div>
         </div>
+
+        <div class="flex items-center justify-end gap-2 p-2 mt-auto border-t border-border flex-shrink-0">
+            <div class="w-[150px]">
+                <VirtualCombobox
+                    v-model="manualAddUserId"
+                    :groups="userPickerGroups"
+                    placeholder="伪记录"
+                    search-placeholder="搜索..."
+                    :clearable="true"
+                    :close-on-select="true"
+                >
+                    <template #trigger="{ text }">
+                        <div class="flex items-center truncate">
+                            <Search class="mr-2 size-4 opacity-50" />
+                            <span class="truncate">{{ text || "伪记录" }}</span>
+                        </div>
+                    </template>
+                    <template #item="{ item }">
+                        <div class="flex w-full items-center p-1.5 text-[13px]">
+                            <div class="flex-1 overflow-hidden">
+                                <span class="block truncate font-medium leading-[18px]" v-text="item.label"></span>
+                            </div>
+                        </div>
+                    </template>
+                </VirtualCombobox>
+            </div>
+            <Button
+                size="sm"
+                variant="outline"
+                :disabled="!manualAddUserId"
+                @click="handleAddFakeRecord"
+                class="px-3"
+            >
+                <Plus class="size-4 mr-1" />
+                添加记录
+            </Button>
+        </div>
     </div>
 </template>
 
@@ -108,9 +145,9 @@
     import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
     import { storeToRefs } from 'pinia';
     import { useI18n } from 'vue-i18n';
-    import { BarChart3, List } from 'lucide-vue-next';
+    import { BarChart3, List, Plus, Search } from 'lucide-vue-next';
 
-    import { useGameLogStore, useInstanceStore, useSearchStore, useVrcxStore } from '../../../stores';
+    import { useGameLogStore, useInstanceStore, useSearchStore, useVrcxStore, useFriendStore, useUserStore, useTrackedNonFriendsStore } from '../../../stores';
     import { compareByCreatedAt, localeIncludes, parseLocation, timeToText } from '../../../shared/utils';
     import { DataTableLayout } from '../../ui/data-table';
     import { InputGroupField } from '../../../components/ui/input-group';
@@ -122,14 +159,116 @@
     import { lookupUser } from '../../../coordinators/userCoordinator';
 
     import PreviousInstancesInfoChart from './PreviousInstancesInfoChart.vue';
+    import { VirtualCombobox } from '../../../components/ui/virtual-combobox';
+    import { Button } from '../../../components/ui/button';
 
     const { previousInstancesInfoDialog, previousInstancesInfoState } = storeToRefs(useInstanceStore());
     const { gameLogIsFriend, gameLogIsFavorite } = useGameLogStore();
     const { t } = useI18n();
 
+    const { vipFriends, onlineFriends, activeFriends, offlineFriends } = storeToRefs(useFriendStore());
+    const { trackedList } = storeToRefs(useTrackedNonFriendsStore());
+    const { currentUser } = storeToRefs(useUserStore());
+
+    const manualAddUserId = ref('');
+
     const dialogState = computed(() => {
         return previousInstancesInfoState.value;
     });
+
+    const friendSections = computed(() => [
+        { key: 'vip', label: t('side_panel.favorite'), friends: vipFriends.value },
+        { key: 'online', label: t('side_panel.online'), friends: onlineFriends.value },
+        { key: 'active', label: t('side_panel.active'), friends: activeFriends.value },
+        { key: 'offline', label: t('side_panel.offline'), friends: offlineFriends.value }
+    ]);
+
+    const userPickerGroups = computed(() => {
+        const groups = [];
+        const addGroup = ({ key, label, list }) => {
+            if (!list?.length) return;
+            const addedIds = new Set();
+            const items = [];
+            for (const item of list) {
+                const uid = String(item.id || item.userId);
+                if (addedIds.has(uid)) continue;
+                addedIds.add(uid);
+                items.push({
+                    value: uid,
+                    label: item.displayName || item.name || uid,
+                    search: item.displayName || item.name || uid,
+                    user: item
+                });
+            }
+            if (items.length > 0) {
+                groups.push({ key, label, items });
+            }
+        };
+
+        friendSections.value.forEach(section => {
+            addGroup({ key: section.key, label: section.label, list: section.friends });
+        });
+
+        addGroup({ key: 'tracked', label: '追踪非好友', list: trackedList.value });
+
+        return groups;
+    });
+
+    async function handleAddFakeRecord() {
+        if (!manualAddUserId.value) return;
+
+        let targetUser = null;
+        for (const group of userPickerGroups.value) {
+            const found = group.items.find(i => i.value === manualAddUserId.value);
+            if (found) {
+                targetUser = found;
+                break;
+            }
+        }
+        if (!targetUser) return;
+        const uid = targetUser.value;
+        const uDisplayName = targetUser.label;
+
+        let joinTime = Date.now();
+        if (currentUser.value?.id) {
+            const ownJoinTime = await database.getLastJoinTimeForUserAtLocation({
+                id: currentUser.value.id,
+                displayName: currentUser.value.displayName || currentUser.value.username
+            }, location.value.tag);
+            if (ownJoinTime) {
+                joinTime = ownJoinTime;
+            }
+        }
+
+        const joinMs = joinTime;
+        const leaveMs = joinMs + 5000;
+
+        const joinedAtISO = new Date(joinMs).toISOString();
+        const leftAtISO = new Date(leaveMs).toISOString();
+
+        database.addGamelogJoinLeaveToDatabase({
+            created_at: joinedAtISO,
+            type: 'OnPlayerJoined',
+            displayName: uDisplayName,
+            location: location.value.tag,
+            userId: uid,
+            time: 0
+        });
+
+        database.addGamelogJoinLeaveToDatabase({
+            created_at: leftAtISO,
+            type: 'OnPlayerLeft',
+            displayName: uDisplayName,
+            location: location.value.tag,
+            userId: uid,
+            time: 5000
+        });
+
+        setTimeout(() => {
+            refreshPreviousInstancesInfoTable();
+        }, 100);
+        manualAddUserId.value = '';
+    }
 
     const loading = ref(false);
     const rawRows = ref([]);

@@ -120,7 +120,7 @@ export const useManualRelationsStore = defineStore('ManualRelations', () => {
                         const overlapStart = Math.max(sessA.leaveAt - sessA.time, sessB.leaveAt - sessB.time);
                         const overlapEnd = Math.min(sessA.leaveAt, sessB.leaveAt);
                         
-                        if (overlapEnd - overlapStart >= 60000) {
+                        if (overlapEnd > overlapStart) {
                             const [id1, id2] = [sessA.userId, sessB.userId].sort();
                             const key = `${id1}|${id2}`;
                             
@@ -338,8 +338,17 @@ export const useManualRelationsStore = defineStore('ManualRelations', () => {
                     }
                     
                     finalScore = Math.round(baseScore * multiplier);
-                    if (finalScore < 1) continue; 
-                    displayScore = `${finalScore}`;
+                
+                // 过滤逻辑：
+                // 1. 如果是尚未添加的关系，只保留 5 分及以上的 (过滤掉低分噪音)
+                // 2. 如果是已经添加的关系，保留 1 分及以上的 (确保已添加列表能显示分数)
+                if (isAdded) {
+                    if (finalScore < 1) continue;
+                } else {
+                    if (finalScore < 5) continue;
+                }
+
+                displayScore = `${finalScore}`;
 
                     tooltip = `最终得分: ${finalScore}\n`
                             + `计算式: ${baseScore.toFixed(1)} (基数) × ${multiplierStr} (权重)\n`

@@ -686,6 +686,9 @@
             },
             "two_person_relationship": {
                 "header": "Duo Relationship",
+                "tips": {
+                    "description": "Analyzes your game log database to find instances where two friends were present in the same room. Even if you weren't there, it reconstructs their shared moments from their individual join/leave records."
+                },
                 "select_friend_a": "Select Friend A",
                 "select_friend_b": "Select Friend B",
                 "search_friend": "Search friends...",

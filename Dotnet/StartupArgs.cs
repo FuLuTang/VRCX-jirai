@@ -51,7 +51,6 @@ namespace VRCX
             var disableClosing = LaunchArguments.IsUpgrade || // we're upgrading, allow it
                                         !string.IsNullOrEmpty(CommandLineArgsParser.GetArgumentValue(args, CefSharpArguments.SubProcessTypeArgument)); // we're launching a subprocess, allow it
 
-            // if we're launching a second instance with same config directory, focus the first instance then exit
             if (!disableClosing && IsDuplicateProcessRunning(LaunchArguments))
             {
                 IPCToMain();
@@ -120,7 +119,8 @@ namespace VRCX
 
         private static bool IsDuplicateProcessRunning(VrcxLaunchArguments launchArguments)
         {
-            var processes = Process.GetProcessesByName("VRCX");
+            var currentProcess = Process.GetCurrentProcess();
+            var processes = Process.GetProcessesByName(currentProcess.ProcessName);
             var isDuplicateProcessRunning = false;
             foreach (var process in processes)
             {
