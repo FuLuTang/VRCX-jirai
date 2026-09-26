@@ -2,6 +2,7 @@ import { database } from '../services/database';
 import { userRequest } from '../api';
 import { useTrackedNonFriendsStore } from '../stores/trackedNonFriends';
 import { watchState } from '../services/watchState';
+import { recordBioObservation } from './bioHistoryCoordinator';
 
 let isRunning = false;
 
@@ -23,7 +24,9 @@ export async function refreshTrackedNonFriendsFlow() {
         const tracked = [...trackedStore.trackedList];
         if (tracked.length === 0) return;
 
-        console.log(`[NonFriendRefresh] 开始刷新 ${tracked.length} 位追踪非好友的数据`);
+        console.log(
+            `[NonFriendRefresh] 开始刷新 ${tracked.length} 位追踪非好友的数据`
+        );
 
         for (const entry of tracked) {
             const userId = entry.userId;
@@ -36,28 +39,26 @@ export async function refreshTrackedNonFriendsFlow() {
 
                 // Update display name in DB if changed
                 if (displayName && displayName !== entry.displayName) {
-                    await database.updateTrackedNonFriendDisplayName(userId, displayName);
+                    await database.updateTrackedNonFriendDisplayName(
+                        userId,
+                        displayName
+                    );
                 }
 
                 // Record bio change
-                const currentBio = ref.bio || '';
-                const lastBio = await database.getLastBioChangeForUser(userId);
-                if (!lastBio || lastBio.bio !== currentBio) {
-                    database.addBioToDatabase({
-                        created_at: new Date().toISOString(),
-                        userId,
-                        displayName,
-                        bio: currentBio,
-                        previousBio: lastBio ? lastBio.bio : ''
-                    });
-                }
+                await recordBioObservation(result.json, {
+                    userId,
+                    displayName,
+                    createdAt: new Date().toISOString()
+                });
 
                 // Record status change
                 const currentStatus = ref.status || '';
                 const currentStatusDesc = ref.statusDescription || '';
                 const validStatuses = ['join me', 'active', 'ask me', 'busy'];
                 if (validStatuses.includes(currentStatus)) {
-                    const lastStatus = await database.getLastStatusChangeForUser(userId);
+                    const lastStatus =
+                        await database.getLastStatusChangeForUser(userId);
                     if (!lastStatus || lastStatus.status !== currentStatus) {
                         database.addStatusToDatabase({
                             created_at: new Date().toISOString(),
@@ -66,13 +67,18 @@ export async function refreshTrackedNonFriendsFlow() {
                             status: currentStatus,
                             statusDescription: currentStatusDesc,
                             previousStatus: lastStatus ? lastStatus.status : '',
-                            previousStatusDescription: lastStatus ? lastStatus.statusDescription : ''
+                            previousStatusDescription: lastStatus
+                                ? lastStatus.statusDescription
+                                : ''
                         });
                     }
                 }
             } catch (err) {
                 // API errors (e.g. user not found) are non-fatal
-                console.warn(`[NonFriendRefresh] 刷新用户 ${userId} 失败:`, err?.message || err);
+                console.warn(
+                    `[NonFriendRefresh] 刷新用户 ${userId} 失败:`,
+                    err?.message || err
+                );
             }
         }
 

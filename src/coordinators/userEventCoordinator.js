@@ -11,6 +11,7 @@ import { useNotificationStore } from '../stores/notification';
 import { useSharedFeedStore } from '../stores/sharedFeed';
 import { useUserStore } from '../stores/user';
 import { useWorldStore } from '../stores/world';
+import { createBioChangeFeed } from './bioHistoryCoordinator';
 
 /**
  * Handles user diff events and applies cross-store side effects.
@@ -306,23 +307,11 @@ export async function runHandleUserUpdateFlow(
         feedStore.addFeedEntry(feed);
         database.addStatusToDatabase(feed);
     }
-    if (props.bio && props.bio[0] && props.bio[1]) {
-        let bio = '';
-        let previousBio = '';
-        if (props.bio[0]) {
-            bio = props.bio[0];
-        }
-        if (props.bio[1]) {
-            previousBio = props.bio[1];
-        }
-        feed = {
-            created_at: nowIso(),
-            type: 'Bio',
-            userId: ref.id,
-            displayName: ref.displayName,
-            bio,
-            previousBio
-        };
+    const bioFeed = props.bio
+        ? createBioChangeFeed(ref, props.bio, nowIso())
+        : null;
+    if (bioFeed) {
+        feed = bioFeed;
         notificationStore.queueFeedNoty(feed);
         sharedFeedStore.addEntry(feed);
         feedStore.addFeedEntry(feed);

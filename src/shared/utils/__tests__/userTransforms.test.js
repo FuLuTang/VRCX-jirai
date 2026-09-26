@@ -51,6 +51,35 @@ describe('sanitizeUserJson', () => {
         const json = { id: 'usr_123' };
         expect(() => sanitizeUserJson(json, '')).not.toThrow();
     });
+
+    it.each([null, undefined, 42, false])(
+        'does not treat non-string bio %s as an observation or cached update',
+        (bio) => {
+            const json = { bio };
+            sanitizeUserJson(json, '');
+            expect(json).not.toHaveProperty('bio');
+
+            const diff = diffObjectProps(
+                { bio: 'known bio' },
+                json,
+                (a, b) => JSON.stringify(a) === JSON.stringify(b)
+            );
+            expect(diff.changedProps).not.toHaveProperty('bio');
+        }
+    );
+
+    it('preserves an explicit empty bio as a real value', () => {
+        const json = { bio: '' };
+        sanitizeUserJson(json, '');
+        expect(json.bio).toBe('');
+
+        const diff = diffObjectProps(
+            { bio: 'known bio' },
+            json,
+            (a, b) => JSON.stringify(a) === JSON.stringify(b)
+        );
+        expect(diff.changedProps.bio).toEqual(['', 'known bio']);
+    });
 });
 
 describe('computeTrustLevel', () => {
