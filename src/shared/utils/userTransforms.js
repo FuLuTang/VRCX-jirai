@@ -14,8 +14,12 @@ export function sanitizeUserJson(json, robotUrl) {
         json.statusDescription = replaceBioSymbols(json.statusDescription);
         json.statusDescription = removeEmojis(json.statusDescription);
     }
-    if (json.bio) {
+    if (typeof json.bio === 'string') {
         json.bio = replaceBioSymbols(json.bio);
+    } else {
+        // Some VRChat responses omit bio or return null. Neither is evidence
+        // that the user cleared their bio, and must not overwrite cached data.
+        delete json.bio;
     }
     if (json.note) {
         json.note = replaceBioSymbols(json.note);

@@ -36,6 +36,10 @@ import {
     runPostApplySyncFlow
 } from './userSessionCoordinator';
 import { runHandleUserUpdateFlow } from './userEventCoordinator';
+import {
+    getBioObservation,
+    recordBioObservation
+} from './bioHistoryCoordinator';
 import { runUpdateCurrentUserLocationFlow } from './locationCoordinator';
 import { runUpdateFriendFlow } from './friendPresenceCoordinator';
 import { userOnFriend } from './friendRelationshipCoordinator';
@@ -302,8 +306,12 @@ export function applyUser(json) {
         if (changedProps.state && ref.id === userStore.currentUser.id) {
             const newState = changedProps.state[1];
             const oldState = changedProps.state[0];
-            if ((newState === 'online' && (oldState === 'offline' || oldState === 'active')) ||
-                ((newState === 'offline' || newState === 'active') && oldState === 'online')) {
+            if (
+                (newState === 'online' &&
+                    (oldState === 'offline' || oldState === 'active')) ||
+                ((newState === 'offline' || newState === 'active') &&
+                    oldState === 'online')
+            ) {
                 database.addOnlineOfflineToDatabase({
                     created_at: new Date().toJSON(),
                     type: newState === 'online' ? 'Online' : 'Offline',
@@ -312,7 +320,10 @@ export function applyUser(json) {
                     location: ref.location,
                     worldName: '', // Will be resolved if needed
                     groupName: '',
-                    time: newState === 'offline' ? (Date.now() - ref.$location_at) : ''
+                    time:
+                        newState === 'offline'
+                            ? Date.now() - ref.$location_at
+                            : ''
                 });
             }
         }
@@ -461,31 +472,25 @@ export function showUserDialog(userId) {
                 // Record bio snapshot for any user (friend or stranger) when
                 // their profile is viewed, skipping if bio hasn't changed.
                 // Also skip when runHandleUserUpdateFlow already recorded this
-                // exact bio change: that path fires for friends whenever bio
-                // transitions from one non-empty value to another non-empty
-                // value. Racing with it would insert a duplicate record.
-                if (userId !== currentUser.id && D.ref.bio !== undefined) {
-                    const currentBio = D.ref.bio || '';
+                // exact bio change for a friend. This includes transitions to
+                // an explicit empty string, which represents a real clear.
+                const currentBio = getBioObservation(args.json);
+                if (userId !== currentUser.id && currentBio !== undefined) {
                     const isFriend = friendStore.friends.has(userId);
                     const eventFlowWillRecord =
                         isFriend &&
-                        bioBefore !== undefined &&
-                        Boolean(bioBefore) &&
-                        Boolean(currentBio) &&
+                        typeof bioBefore === 'string' &&
                         bioBefore !== currentBio;
                     if (!eventFlowWillRecord) {
-                        database.getLastBioChangeForUser(userId).then((last) => {
-                            if (!last || last.bio !== currentBio) {
-                                database.addBioToDatabase({
-                                    created_at: new Date().toJSON(),
-                                    userId,
-                                    displayName: D.ref.displayName,
-                                    bio: currentBio,
-                                    previousBio: last ? last.bio : ''
-                                });
-                            }
+                        recordBioObservation(args.json, {
+                            userId,
+                            displayName: D.ref.displayName,
+                            createdAt: new Date().toJSON()
                         }).catch((err) => {
-                            console.error('Failed to record bio snapshot:', err);
+                            console.error(
+                                'Failed to record bio snapshot:',
+                                err
+                            );
                         });
                     }
                 }
@@ -499,7 +504,12 @@ export function showUserDialog(userId) {
                     const currentStatus = D.ref.status || '';
                     const currentStatusDesc = D.ref.statusDescription || '';
                     const isFriend = friendStore.friends.has(userId);
-                    const validStatuses = ['join me', 'active', 'ask me', 'busy'];
+                    const validStatuses = [
+                        'join me',
+                        'active',
+                        'ask me',
+                        'busy'
+                    ];
                     // runHandleUserUpdateFlow records the status change for
                     // friends when both old and new status are non-offline.
                     const eventFlowWillRecordStatus =
@@ -508,22 +518,33 @@ export function showUserDialog(userId) {
                         statusBefore !== currentStatus &&
                         currentStatus !== 'offline' &&
                         (statusBefore || '') !== 'offline';
-                    if (!eventFlowWillRecordStatus && validStatuses.includes(currentStatus)) {
-                        database.getLastStatusChangeForUser(userId).then((last) => {
-                            if (!last || last.status !== currentStatus) {
-                                database.addStatusToDatabase({
-                                    created_at: new Date().toJSON(),
-                                    userId,
-                                    displayName: D.ref.displayName,
-                                    status: currentStatus,
-                                    statusDescription: currentStatusDesc,
-                                    previousStatus: last ? last.status : '',
-                                    previousStatusDescription: last ? last.statusDescription : ''
-                                });
-                            }
-                        }).catch((err) => {
-                            console.error('Failed to record status snapshot:', err);
-                        });
+                    if (
+                        !eventFlowWillRecordStatus &&
+                        validStatuses.includes(currentStatus)
+                    ) {
+                        database
+                            .getLastStatusChangeForUser(userId)
+                            .then((last) => {
+                                if (!last || last.status !== currentStatus) {
+                                    database.addStatusToDatabase({
+                                        created_at: new Date().toJSON(),
+                                        userId,
+                                        displayName: D.ref.displayName,
+                                        status: currentStatus,
+                                        statusDescription: currentStatusDesc,
+                                        previousStatus: last ? last.status : '',
+                                        previousStatusDescription: last
+                                            ? last.statusDescription
+                                            : ''
+                                    });
+                                }
+                            })
+                            .catch((err) => {
+                                console.error(
+                                    'Failed to record status snapshot:',
+                                    err
+                                );
+                            });
                     }
                 }
 
@@ -657,19 +678,28 @@ export function showUserDialog(userId) {
                     });
                 D.visible = true;
                 userStore.applyUserDialogLocation(true);
-                
+
                 const manualRelationsStore = useManualRelationsStore();
-                const suggestions = manualRelationsStore.cachedSuggestions || [];
-                const ignoredKeys = manualRelationsStore.ignoredSuggestionKeys || new Set();
-                
-                const suggestionForThisUser = suggestions.find(s => 
-                    (s.userIdA === userId || s.userIdB === userId) && 
-                    !ignoredKeys.has(s.key) && 
-                    !manualRelationsStore.isManualRelation(s.userIdA, s.userIdB)
+                const suggestions =
+                    manualRelationsStore.cachedSuggestions || [];
+                const ignoredKeys =
+                    manualRelationsStore.ignoredSuggestionKeys || new Set();
+
+                const suggestionForThisUser = suggestions.find(
+                    (s) =>
+                        (s.userIdA === userId || s.userIdB === userId) &&
+                        !ignoredKeys.has(s.key) &&
+                        !manualRelationsStore.isManualRelation(
+                            s.userIdA,
+                            s.userIdB
+                        )
                 );
 
                 if (suggestionForThisUser) {
-                    const otherUserName = suggestionForThisUser.userIdA === userId ? suggestionForThisUser.nameB : suggestionForThisUser.nameA;
+                    const otherUserName =
+                        suggestionForThisUser.userIdA === userId
+                            ? suggestionForThisUser.nameB
+                            : suggestionForThisUser.nameA;
                     const n = new Noty({
                         type: 'alert',
                         timeout: 6000,
@@ -684,33 +714,62 @@ export function showUserDialog(userId) {
                             </div>
                         `,
                         callbacks: {
-                            onShow: function() {
+                            onShow: function () {
                                 if (this.barDom) {
-                                    this.barDom.style.setProperty('z-index', '2147483647', 'important');
-                                    this.barDom.style.setProperty('pointer-events', 'auto', 'important');
+                                    this.barDom.style.setProperty(
+                                        'z-index',
+                                        '2147483647',
+                                        'important'
+                                    );
+                                    this.barDom.style.setProperty(
+                                        'pointer-events',
+                                        'auto',
+                                        'important'
+                                    );
                                     if (this.barDom.parentElement) {
-                                        this.barDom.parentElement.style.setProperty('z-index', '2147483647', 'important');
-                                        this.barDom.parentElement.style.setProperty('pointer-events', 'auto', 'important');
+                                        this.barDom.parentElement.style.setProperty(
+                                            'z-index',
+                                            '2147483647',
+                                            'important'
+                                        );
+                                        this.barDom.parentElement.style.setProperty(
+                                            'pointer-events',
+                                            'auto',
+                                            'important'
+                                        );
                                     }
                                 }
-                                const pb = this.barDom.querySelector('.noty_progressbar');
+                                const pb =
+                                    this.barDom.querySelector(
+                                        '.noty_progressbar'
+                                    );
                                 if (pb) {
                                     pb.style.backgroundColor = '#9ca3af';
                                     pb.style.opacity = '0.8';
                                 }
-                                
-                                const yesBtn = this.barDom.querySelector('.noty-btn-yes');
-                                if(yesBtn) {
+
+                                const yesBtn =
+                                    this.barDom.querySelector('.noty-btn-yes');
+                                if (yesBtn) {
                                     yesBtn.addEventListener('click', () => {
-                                        manualRelationsStore.addManualRelation(suggestionForThisUser.userIdA, suggestionForThisUser.userIdB, 'friend');
-                                        manualRelationsStore.ignoreSuggestion(suggestionForThisUser.key);
+                                        manualRelationsStore.addManualRelation(
+                                            suggestionForThisUser.userIdA,
+                                            suggestionForThisUser.userIdB,
+                                            'friend'
+                                        );
+                                        manualRelationsStore.ignoreSuggestion(
+                                            suggestionForThisUser.key
+                                        );
                                         n.close();
                                     });
                                 }
-                                const noBtn = this.barDom.querySelector('.noty-btn-no');
-                                if(noBtn) {
+                                const noBtn =
+                                    this.barDom.querySelector('.noty-btn-no');
+                                if (noBtn) {
                                     noBtn.addEventListener('click', () => {
-                                        manualRelationsStore.ignoreSuggestion(suggestionForThisUser.key);
+                                        manualRelationsStore.ignoreSuggestion(
+                                            suggestionForThisUser.key
+                                        );
                                         n.close();
                                     });
                                 }
