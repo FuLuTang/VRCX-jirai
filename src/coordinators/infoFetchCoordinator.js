@@ -3,10 +3,14 @@ import { database } from '../services/database';
 import {
     useFriendStore,
     useTrackedNonFriendsStore,
-    useManualRelationsStore
+    useManualRelationsStore,
+    useUserStore
 } from '../stores';
 import { userRequest } from '../api';
-import { recordBioObservation } from './bioHistoryCoordinator';
+import {
+    cleanupSuspiciousBioClearBurst,
+    recordBioObservation
+} from './bioHistoryCoordinator';
 
 /**
  * 信息抓取补全的全局响应式状态。
@@ -24,6 +28,7 @@ export const infoFetchState = reactive({
 });
 
 let cancelled = false;
+const bioCleanupCheckedAccounts = new Set();
 
 /**
  * 取消正在进行的抓取。
@@ -97,11 +102,40 @@ export async function runSilentInfoFetch() {
     infoFetchState.bioUpdated = 0;
     infoFetchState.statusUpdated = 0;
 
+    const trackedStore = useTrackedNonFriendsStore();
+    if (!trackedStore.isLoaded) {
+        try {
+            await trackedStore.loadTrackedNonFriends();
+        } catch (err) {
+            console.warn(
+                '[InfoFetch] Failed to load tracked non-friends before scanning:',
+                err
+            );
+        }
+    }
+
     const targets = buildTargetList();
     const counts = getTargetCount();
     infoFetchState.total = targets.length;
     infoFetchState.friendsTotal = counts.friends;
     infoFetchState.trackedTotal = counts.tracked;
+
+    const accountId = useUserStore().currentUser?.id;
+    if (accountId && !bioCleanupCheckedAccounts.has(accountId)) {
+        try {
+            const cleanup = await cleanupSuspiciousBioClearBurst(
+                counts.total * 3
+            );
+            bioCleanupCheckedAccounts.add(accountId);
+            if (cleanup?.deleted > 0) {
+                console.warn(
+                    `[BioHistoryCleanup] Removed ${cleanup.deleted} suspicious Bio-clear records (${cleanup.start} to ${cleanup.end}).`
+                );
+            }
+        } catch (err) {
+            console.warn('[BioHistoryCleanup] Cleanup check failed:', err);
+        }
+    }
 
     if (targets.length === 0) {
         infoFetchState.status = 'done';

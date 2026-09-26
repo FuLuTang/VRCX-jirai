@@ -127,6 +127,48 @@ const feed = {
         return results;
     },
 
+    async getRecentBioClearChanges(limit) {
+        const results = [];
+        await sqliteService.execute(
+            (row) => {
+                results.push({ id: row[0], createdAt: row[1] });
+            },
+            `SELECT id, created_at FROM ${dbVars.userPrefix}_feed_bio
+             WHERE bio = '' AND previous_bio IS NOT NULL AND previous_bio <> ''
+             ORDER BY created_at DESC, id DESC LIMIT @limit`,
+            { '@limit': limit }
+        );
+        return results;
+    },
+
+    async getBioClearChangesBefore({ createdAt, id, limit }) {
+        const results = [];
+        await sqliteService.execute(
+            (row) => {
+                results.push({ id: row[0], createdAt: row[1] });
+            },
+            `SELECT id, created_at FROM ${dbVars.userPrefix}_feed_bio
+             WHERE bio = '' AND previous_bio IS NOT NULL AND previous_bio <> ''
+               AND (created_at < @createdAt OR (created_at = @createdAt AND id < @id))
+             ORDER BY created_at DESC, id DESC LIMIT @limit`,
+            {
+                '@createdAt': createdAt,
+                '@id': id,
+                '@limit': limit
+            }
+        );
+        return results;
+    },
+
+    async deleteBioClearChangesBetween(startCreatedAt, endCreatedAt) {
+        return sqliteService.executeNonQuery(
+            `DELETE FROM ${dbVars.userPrefix}_feed_bio
+             WHERE bio = '' AND previous_bio IS NOT NULL AND previous_bio <> ''
+               AND created_at >= @startCreatedAt AND created_at <= @endCreatedAt`,
+            { '@startCreatedAt': startCreatedAt, '@endCreatedAt': endCreatedAt }
+        );
+    },
+
     addAvatarToDatabase(entry) {
         sqliteService.executeNonQuery(
             `INSERT OR IGNORE INTO ${dbVars.userPrefix}_feed_avatar (created_at, user_id, display_name, owner_id, avatar_name, current_avatar_image_url, current_avatar_thumbnail_image_url, previous_current_avatar_image_url, previous_current_avatar_thumbnail_image_url) VALUES (@created_at, @user_id, @display_name, @owner_id, @avatar_name, @current_avatar_image_url, @current_avatar_thumbnail_image_url, @previous_current_avatar_image_url, @previous_current_avatar_thumbnail_image_url)`,
