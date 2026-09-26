@@ -23,7 +23,7 @@ function renameBuild(arch, platform) {
         const oldAppImage = path.join(buildDir, `VRCX_Version.AppImage`);
         const newAppImage = path.join(
             buildDir,
-            `VRCX_${version}_${arch}.AppImage`
+            `VRCX-Jirai_${version}_${arch}.AppImage`
         );
         try {
             if (fs.existsSync(oldAppImage)) {
@@ -38,7 +38,10 @@ function renameBuild(arch, platform) {
         }
     } else if (platform === 'darwin') {
         const oldDmg = path.join(buildDir, `VRCX_Version.dmg`);
-        const newDmg = path.join(buildDir, `VRCX_${version}_${arch}.dmg`);
+        const newDmg = path.join(
+            buildDir,
+            `VRCX-Jirai_${version}_${arch}.dmg`
+        );
         try {
             if (fs.existsSync(oldDmg)) {
                 fs.renameSync(oldDmg, newDmg);
